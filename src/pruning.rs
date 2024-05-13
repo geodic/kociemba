@@ -74,7 +74,7 @@ impl PrunningTables {
     /// Create/load the flipslice_twist_depth3 pruning table for phase 1.
     pub fn create_phase1_prun_table(&mut self) {
         let total: usize = N_FLIPSLICE_CLASS * N_TWIST;
-        let fname = "phase1_prun";
+        let fname = "tables/phase1_prun";
         let phase1_prun_table = std::fs::read(&fname).unwrap_or("".into());
         let flipslicesyms = symmetries::flipslice_syms().unwrap();
         let flipslice_classidx = flipslicesyms.classidx;
@@ -90,7 +90,7 @@ impl PrunningTables {
 
         if phase1_prun_table.is_empty() {
             println!("Creating {} table...", fname);
-            println!("This may take half an hour or even longer, depending on the hardware.");
+            println!("This may take half a few minutes or longer, depending on the hardware.");
             // create table with the symmetries of the flipslice classes
             let mut cc = CubieCube::default();
             let mut fs_sym = vec![0; N_FLIPSLICE_CLASS];
@@ -164,12 +164,7 @@ impl PrunningTables {
                             true => self.get_flipslice_twist_depth3(idx) == 3,
                             false => self.get_flipslice_twist_depth3(idx) == depth3,
                         };
-                        // let mut mat = false;
-                        // if backsearch {
-                        //     mat = self.get_flipslice_twist_depth3(idx) == 3;
-                        // } else {
-                        //     mat = self.get_flipslice_twist_depth3(idx) == depth3;
-                        // }
+
                         if mat {
                             let flipslice = flipslice_rep[fs_classidx];
                             let flip = flipslice % 2048; // N_FLIP = 2048
@@ -251,7 +246,7 @@ impl PrunningTables {
     /// Create/load the corners_ud_edges_depth3 pruning table for phase 2.
     pub fn create_phase2_prun_table(&mut self) {
         let total = N_CORNERS_CLASS * N_UD_EDGES;
-        let fname = "phase2_prun";
+        let fname = "tables/phase2_prun";
         let phase2_prun_table = std::fs::read(&fname).unwrap_or("".into());
         let mut fs_sym = vec![0; N_FLIPSLICE_CLASS];
         let flipslice = symmetries::flipslice_syms().unwrap();
@@ -397,7 +392,7 @@ impl PrunningTables {
     /// Create/load the cornslice_depth pruning table for phase 2. With this table we do a fast precheck
     /// at the beginning of phase 2.
     pub fn create_phase2_cornsliceprun_table(&mut self) {
-        let fname = "phase2_cornsliceprun";
+        let fname = "tables/phase2_cornsliceprun";
         let phase2_cornsliceprun_table = std::fs::read(&fname).unwrap_or("".into());
         let corners_move = moves::move_corners().unwrap();
         let slice_sorted_move = moves::move_slice_sorted().unwrap();

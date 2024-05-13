@@ -6,7 +6,7 @@ use crate::cubie::{self, Corner::*, CubieCube, Edge::*};
 use crate::{decode_table, write_table};
 use crate::{error::Error, facelet::Color};
 
-/// Layer moves, Up, Down, Right, Left, Face, Back.
+/// Layer moves, Up, Right, Front, Down, Face, Back.
 /// $ clockwise, $2 double, $3 counter-clockwise.
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
@@ -104,10 +104,6 @@ impl Move {
     }
 }
 
-pub fn is_move_available(prev: Move, current: Move) -> bool {
-    current != prev && !current.is_inverse(prev) && !current.is_same_layer(prev)
-}
-
 /// The basic six cube moves described by permutations and changes in orientation.
 pub const U_MOVE: CubieCube = CubieCube {
     cp: [UBR, URF, UFL, ULB, DFR, DLF, DBL, DRB],
@@ -183,7 +179,7 @@ impl MoveTables {
 pub fn move_twist() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_twist";
+    let fname = "tables/move_twist";
     let move_twist_table = std::fs::read(&fname).unwrap_or("".into());
     let mut twist_move = vec![0; N_TWIST * N_MOVE];
     if move_twist_table.is_empty() {
@@ -214,7 +210,7 @@ pub fn move_twist() -> Result<Vec<u16>, Error> {
 pub fn move_flip() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_flip";
+    let fname = "tables/move_flip";
     let flip_move_table = std::fs::read(&fname).unwrap_or("".into());
     let mut flip_move = vec![0; N_FLIP * N_MOVE];
     if flip_move_table.is_empty() {
@@ -245,7 +241,7 @@ pub fn move_flip() -> Result<Vec<u16>, Error> {
 pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_slice_sorted";
+    let fname = "tables/move_slice_sorted";
     let slice_move_table = std::fs::read(&fname).unwrap_or("".into());
     let mut slice_move = vec![0; N_SLICE_SORTED * N_MOVE];
     if slice_move_table.is_empty() {
@@ -278,7 +274,7 @@ pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
 pub fn move_u_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_u_edges";
+    let fname = "tables/move_u_edges";
     let move_u_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut u_edges_move = vec![0; N_SLICE_SORTED * N_MOVE];
     if move_u_edges_table.is_empty() {
@@ -311,7 +307,7 @@ pub fn move_u_edges() -> Result<Vec<u16>, Error> {
 pub fn move_d_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_d_edges";
+    let fname = "tables/move_d_edges";
     let move_d_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut d_edges_move = vec![0; N_SLICE_SORTED * N_MOVE];
     if move_d_edges_table.is_empty() {
@@ -343,7 +339,7 @@ pub fn move_d_edges() -> Result<Vec<u16>, Error> {
 pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_ud_edges";
+    let fname = "tables/move_ud_edges";
     let move_ud_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut ud_edges_move = vec![0; N_UD_EDGES * N_MOVE];
     if move_ud_edges_table.is_empty() {
@@ -384,7 +380,7 @@ pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
 pub fn move_corners() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
-    let fname = "move_corners";
+    let fname = "tables/move_corners";
     let move_corners_table = std::fs::read(&fname).unwrap_or("".into());
     let mut corners_move = vec![0; N_CORNERS * N_MOVE];
     if move_corners_table.is_empty() {

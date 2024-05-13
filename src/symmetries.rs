@@ -45,6 +45,7 @@ const CC_MIRR_LR2: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
+#[derive(Debug, Clone)]
 pub struct SymmetriesTables {
     pub bsc: [CubieCube; 4],
     pub sc: [CubieCube; 48],
@@ -204,8 +205,7 @@ pub fn conj_twist() -> Result<Vec<u16>, Error> {
     let sc = sc();
     let inv_idx = inv_idx();
     std::fs::create_dir_all("tables").unwrap();
-    let fname = "conj_twist";
-    let conj_file: String = format!("tables/{}", fname);
+    let fname = "tables/conj_twist";
     let conj_table = std::fs::read(&fname).unwrap_or("".into());
     let mut twist_conj = vec![0; N_TWIST * N_SYM_D4H];
     if conj_table.is_empty() {
@@ -241,7 +241,7 @@ pub fn conj_twist() -> Result<Vec<u16>, Error> {
 pub fn conj_ud_edges() -> Result<Vec<u16>, Error> {
     let sc = sc();
     let inv_idx = inv_idx();
-    let fname = "conj_ud_edges";
+    let fname = "tables/conj_ud_edges";
     let conj_table = std::fs::read(&fname).unwrap_or("".into());
     let mut ud_edges_conj = vec![0; N_UD_EDGES * N_SYM_D4H];
     if conj_table.is_empty() {
@@ -285,9 +285,9 @@ pub struct FlipSliceSyms {
 pub fn flipslice_syms() -> Result<FlipSliceSyms, Error> {
     let sc = sc();
     let inv_idx = inv_idx();
-    let fname1 = "fs_classidx";
-    let fname2 = "fs_sym";
-    let fname3 = "fs_rep";
+    let fname1 = "tables/fs_classidx";
+    let fname2 = "tables/fs_sym";
+    let fname3 = "tables/fs_rep";
     let classidx_table = std::fs::read(&fname1).unwrap_or("".into());
     let sym_table = std::fs::read(&fname2).unwrap_or("".into());
     let rep_table = std::fs::read(&fname3).unwrap_or("".into());
@@ -364,9 +364,9 @@ pub struct CornerSyms {
 pub fn corner_syms() -> Result<CornerSyms, Error> {
     let sc = sc();
     let inv_idx = inv_idx();
-    let fname1 = "co_classidx";
-    let fname2 = "co_sym";
-    let fname3 = "co_rep";
+    let fname1 = "tables/co_classidx";
+    let fname2 = "tables/co_sym";
+    let fname3 = "tables/co_rep";
     let classidx_table = std::fs::read(&fname1).unwrap_or("".into());
     let sym_table = std::fs::read(&fname2).unwrap_or("".into());
     let rep_table = std::fs::read(&fname3).unwrap_or("".into());

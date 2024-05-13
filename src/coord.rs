@@ -3,7 +3,6 @@ use std::{fmt, usize};
 use crate::constants::*;
 use crate::cubie::Edge::*;
 use crate::moves;
-use crate::pruning::PrunningTables;
 use crate::symmetries;
 use crate::{cubie::CubieCube, error::Error};
 use crate::{decode_table, write_table};
@@ -181,7 +180,7 @@ impl EdgeMergeTables {
 
 /// phase2_edgemerge retrieves the initial phase 2 ud_edges coordinate from the u_edges and d_edges coordinates.
 pub fn create_phase2_edgemerge_table() -> Result<Vec<u16>, Error> {
-    let fname = "phase2_edgemerge";
+    let fname = "tables/phase2_edgemerge";
     let mut u_edges_plus_d_edges_to_ud_edges: Vec<u16> = vec![0; N_U_EDGES_PHASE2 * N_PERM_4];
     let mut c_u = CubieCube::default();
     let mut c_d = CubieCube::default();
