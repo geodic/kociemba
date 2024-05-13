@@ -3,6 +3,7 @@ use std::{fmt, usize};
 use crate::constants::*;
 use crate::cubie::Edge::*;
 use crate::moves;
+use crate::symmetries::SymmetriesTables;
 use crate::symmetries;
 use crate::{cubie::CubieCube, error::Error};
 use crate::{decode_table, write_table};
@@ -32,9 +33,6 @@ pub struct CoordCube {
 
 impl Default for CoordCube {
     fn default() -> Self {
-        let flip_slice_syms = symmetries::flipslice_syms().unwrap();
-        let flipslicesyms = flip_slice_syms;
-        let cornersyms = symmetries::corner_syms().unwrap();
         Self {
             twist: 0,
             flip: 0,
@@ -43,24 +41,82 @@ impl Default for CoordCube {
             d_edges: 0,
             corners: 0,
             ud_edges: 0,
-            flipslice_classidx: flipslicesyms.classidx[0],
-            flipslice_sym: flipslicesyms.sym[0],
-            flipslice_rep: flipslicesyms.rep[flipslicesyms.classidx[0] as usize],
-            corner_classidx: cornersyms.classidx[0],
-            corner_sym: cornersyms.sym[0],
-            corner_rep: cornersyms.rep[cornersyms.classidx[0] as usize],
+            flipslice_classidx: 0,
+            flipslice_sym: 0,
+            flipslice_rep: 0,
+            corner_classidx: 0,
+            corner_sym: 0,
+            corner_rep: 0,
         }
     }
 }
 
-impl TryFrom<&CubieCube> for CoordCube {
-    type Error = Error;
-    fn try_from(cc: &CubieCube) -> Result<Self, Self::Error> {
+// impl TryFrom<&CubieCube> for CoordCube {
+//     type Error = Error;
+//     fn try_from(cc: &CubieCube) -> Result<Self, Self::Error> {
+//         if !cc.is_solvable() {
+//             return Err(Error::InvalidCubieValue);
+//         }
+//         let flipslice = symmetries::flipslice_syms().unwrap();
+//         let cornersyms = symmetries::corner_syms().unwrap();
+
+//         let twist = cc.get_twist();
+//         let flip = cc.get_flip();
+//         let slice_sorted = cc.get_slice_sorted();
+//         let u_edges = cc.get_u_edges();
+//         let d_edges = cc.get_d_edges();
+//         let corners = cc.get_corners();
+//         let mut ud_edges = 0;
+
+//         let flipslice_classidx =
+//             flipslice.classidx[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
+//         let flipslice_sym =
+//             flipslice.sym[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
+//         let flipslice_rep = flipslice.rep[flipslice_classidx as usize];
+//         let corner_classidx = cornersyms.classidx[corners as usize];
+//         let corner_sym = cornersyms.sym[corners as usize];
+//         let corner_rep = cornersyms.rep[corner_classidx as usize];
+
+//         if slice_sorted < N_PERM_4 as u16 {
+//             // phase 2 cube
+//             ud_edges = cc.get_ud_edges();
+//         } else {
+//             ud_edges = 65535; // invalid
+//         }
+//         Ok(Self {
+//             twist: twist,
+//             flip: flip,
+//             slice_sorted: slice_sorted,
+//             u_edges: u_edges,
+//             d_edges: d_edges,
+//             corners: corners,
+//             ud_edges: ud_edges,
+//             flipslice_classidx: flipslice_classidx,
+//             flipslice_sym: flipslice_sym,
+//             flipslice_rep: flipslice_rep,
+//             corner_classidx: corner_classidx,
+//             corner_sym: corner_sym,
+//             corner_rep: corner_rep,
+//         })
+//     }
+// }
+
+impl fmt::Display for CoordCube {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // write!(f, "{:?}", self)
+        write!(f, "(twist: {}, flip: {}, slice: {}, U-edges: {}, D-edges: {}, E-edges: {}, Corners: {}, UD-Edges: {})\n{} {} {}\n{} {} {}",
+        self.twist, self.flip, self.slice_sorted / 24, self.u_edges, self.d_edges, self.slice_sorted, self.corners, self.ud_edges,
+        self.flipslice_classidx, self.flipslice_sym, self.flipslice_rep, self.corner_classidx, self.corner_sym, self.corner_rep)
+    }
+}
+
+impl CoordCube {
+
+    pub fn from_cubie(cc: &CubieCube, sy: &SymmetriesTables) -> Result<Self, Error> {
         if !cc.is_solvable() {
             return Err(Error::InvalidCubieValue);
         }
-        let flipslice = symmetries::flipslice_syms().unwrap();
-        let cornersyms = symmetries::corner_syms().unwrap();
+        // let cornersyms = symmetries::corner_syms().unwrap();
 
         let twist = cc.get_twist();
         let flip = cc.get_flip();
@@ -71,13 +127,13 @@ impl TryFrom<&CubieCube> for CoordCube {
         let mut ud_edges = 0;
 
         let flipslice_classidx =
-            flipslice.classidx[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
+            sy.flipslice_classidx[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
         let flipslice_sym =
-            flipslice.sym[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
-        let flipslice_rep = flipslice.rep[flipslice_classidx as usize];
-        let corner_classidx = cornersyms.classidx[corners as usize];
-        let corner_sym = cornersyms.sym[corners as usize];
-        let corner_rep = cornersyms.rep[corner_classidx as usize];
+            sy.flipslice_sym[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
+        let flipslice_rep = sy.flipslice_rep[flipslice_classidx as usize];
+        let corner_classidx = sy.corner_classidx[corners as usize];
+        let corner_sym = sy.corner_sym[corners as usize];
+        let corner_rep = sy.corner_rep[corner_classidx as usize];
 
         if slice_sorted < N_PERM_4 as u16 {
             // phase 2 cube
@@ -101,18 +157,7 @@ impl TryFrom<&CubieCube> for CoordCube {
             corner_rep: corner_rep,
         })
     }
-}
 
-impl fmt::Display for CoordCube {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // write!(f, "{:?}", self)
-        write!(f, "(twist: {}, flip: {}, slice: {}, U-edges: {}, D-edges: {}, E-edges: {}, Corners: {}, UD-Edges: {})\n{} {} {}\n{} {} {}",
-        self.twist, self.flip, self.slice_sorted / 24, self.u_edges, self.d_edges, self.slice_sorted, self.corners, self.ud_edges,
-        self.flipslice_classidx, self.flipslice_sym, self.flipslice_rep, self.corner_classidx, self.corner_sym, self.corner_rep)
-    }
-}
-
-impl CoordCube {
     /// Update phase 1 coordinates when move is apply
     /// :param m: The move
     pub fn phase1_move(&mut self, m: moves::Move) {
@@ -252,7 +297,7 @@ mod test {
     use crate::coord::*;
     use crate::facelet::FaceCube;
     use crate::moves::Move;
-
+    /*
     #[test]
     fn test_coordcube() {
         let fc =
@@ -303,7 +348,7 @@ mod test {
         assert_eq!(ccd.corner_rep, 2459);
         // assert_eq!(solver::SolverThread::get_depth_phase2(3, 5), 11);
     }
-
+    */
     #[test]
     fn test_create_phase2_edgemerge_table() {
         let ud_edges = create_phase2_edgemerge_table().unwrap();

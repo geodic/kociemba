@@ -3,7 +3,7 @@ use kociemba::solver::solve;
 fn main() {
     let _ = solve(
         "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
-        16,
+        19,
         3.0,
     );
 }

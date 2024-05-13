@@ -150,7 +150,6 @@ pub const B_MOVE: CubieCube = CubieCube {
 pub struct MoveTables {
     pub twist_move: Vec<u16>,
     pub flip_move: Vec<u16>,
-    pub slice_move: Vec<u16>,
     pub u_edges_move: Vec<u16>,
     pub d_edges_move: Vec<u16>,
     pub ud_edges_move: Vec<u16>,
@@ -163,7 +162,6 @@ impl MoveTables {
         Self {
             twist_move: move_twist().unwrap(),
             flip_move: move_flip().unwrap(),
-            slice_move: move_slice_sorted().unwrap(),
             u_edges_move: move_u_edges().unwrap(),
             d_edges_move: move_d_edges().unwrap(),
             ud_edges_move: move_ud_edges().unwrap(),

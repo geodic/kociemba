@@ -35,9 +35,9 @@ impl SolverTables {
         let sy = symmetries::SymmetriesTables::new();
         let mv = moves::MoveTables::new();
         let mut pr = pruning::PrunningTables::default();
-        pr.create_phase1_prun_table();
-        pr.create_phase2_prun_table();
-        pr.create_phase2_cornsliceprun_table();
+        pr.create_phase1_prun_table(&sy, &mv);
+        pr.create_phase2_prun_table(&sy, &mv);
+        pr.create_phase2_cornsliceprun_table(&mv);
         let em = coord::EdgeMergeTables::new();
         Self {
             sy: sy,
@@ -606,14 +606,11 @@ impl<'a> SolverThread<'a> {
             // invert cube
             cb = cb.inverse_cubie_cube();
         }
-        self.co_cube = CoordCube::try_from(&cb).unwrap(); // the rotated/inverted cube in coordinate representation
+        // self.co_cube = CoordCube::try_from(&cb).unwrap(); // the rotated/inverted cube in coordinate representation
+        self.co_cube = CoordCube::from_cubie(&cb, &self.solvertables.sy).unwrap(); // the rotated/inverted cube in coordinate representation
         let dist = self.get_depth_phase1() as u16;
         for togo1 in dist..20 {
             // iterative deepening, solution has at least dist moves
-            // println!(
-            //     "Start search, flip {}, twist {}, ss {}, dist {}, togo1 {}",
-            //     self.co_cube.flip, self.co_cube.twist, self.co_cube.slice_sorted, dist, togo1
-            // );
             self.sofar_phase1 = Vec::new();
             let _ret = self
                 .search(

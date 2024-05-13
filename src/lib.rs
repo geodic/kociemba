@@ -1,9 +1,9 @@
 //! A crate for manipulating and solving the 3x3 Rubik's cube with [Kociemba's two phase algorithm](http://kociemba.org/cube.htm).
 
-/// Module containing functions for scrambling the cube.
-
 #[macro_use]
 extern crate lazy_static;
+
+/// Module containing functions for scrambling the cube.
 pub mod scramble;
 
 pub mod error;
