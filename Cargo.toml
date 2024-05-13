@@ -1,0 +1,21 @@
+[package]
+name = "kociemba"
+version = "0.5.0"
+edition = "2021"
+description = "A crate for manipulating and solving a 3x3 Rubik's cube with Kociemba's two phase algorithm"
+authors = [
+  "Adun Gaos <adungaos@gmail.com>",
+]
+keywords = ["rubiks-cube", "cube-solver", "kociemba", "two-phase"]
+categories = ["algorithms"]
+license = "MIT"
+readme = "./README.md"
+
+[dependencies]
+rand = "0.8.5"
+bincode = { version = "2.0.0-rc", features = ["serde"] }
+thiserror = "1.0.60"
+crossterm = "0.27.0"
+clap = { version = "4.5.4", features = ["derive"] } 
+spinners = "4.1.1"
+lazy_static = "1.4.0"

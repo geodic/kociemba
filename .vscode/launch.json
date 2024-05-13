@@ -1,0 +1,22 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug launch kewb.exe",
+            "program": "${workspaceFolder}/target/debug/kewb.exe",
+            "args": [
+                "solve",
+                "--scramble",
+                "L2 B2 U R2 D L2 U' R2 D' R2 D B2 U' B' U' R D R B2 F' L2 R U2",
+                "-m",
+                "22",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}
