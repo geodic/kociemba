@@ -8,11 +8,13 @@ use crate::symmetries;
 use crate::{cubie::CubieCube, error::Error};
 use crate::{decode_table, write_table};
 
-/**
-Represent a cube on the coordinate level.
-In phase 1 a state is uniquely determined by the three coordinates flip, twist and slice = slicesorted / 24.
-In phase 2 a state is uniquely determined by the three coordinates corners, ud_edges and slice_sorted % 24.
-*/
+
+/// Represent a cube on the coordinate level.
+/// 
+/// In phase 1 a state is uniquely determined by the three coordinates flip, twist and slice = slicesorted / 24.
+/// 
+/// In phase 2 a state is uniquely determined by the three coordinates corners, ud_edges and slice_sorted % 24.
+/// 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct CoordCube {
     pub twist: u16,        // twist of corners
@@ -51,56 +53,6 @@ impl Default for CoordCube {
     }
 }
 
-// impl TryFrom<&CubieCube> for CoordCube {
-//     type Error = Error;
-//     fn try_from(cc: &CubieCube) -> Result<Self, Self::Error> {
-//         if !cc.is_solvable() {
-//             return Err(Error::InvalidCubieValue);
-//         }
-//         let flipslice = symmetries::flipslice_syms().unwrap();
-//         let cornersyms = symmetries::corner_syms().unwrap();
-
-//         let twist = cc.get_twist();
-//         let flip = cc.get_flip();
-//         let slice_sorted = cc.get_slice_sorted();
-//         let u_edges = cc.get_u_edges();
-//         let d_edges = cc.get_d_edges();
-//         let corners = cc.get_corners();
-//         let mut ud_edges = 0;
-
-//         let flipslice_classidx =
-//             flipslice.classidx[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
-//         let flipslice_sym =
-//             flipslice.sym[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
-//         let flipslice_rep = flipslice.rep[flipslice_classidx as usize];
-//         let corner_classidx = cornersyms.classidx[corners as usize];
-//         let corner_sym = cornersyms.sym[corners as usize];
-//         let corner_rep = cornersyms.rep[corner_classidx as usize];
-
-//         if slice_sorted < N_PERM_4 as u16 {
-//             // phase 2 cube
-//             ud_edges = cc.get_ud_edges();
-//         } else {
-//             ud_edges = 65535; // invalid
-//         }
-//         Ok(Self {
-//             twist: twist,
-//             flip: flip,
-//             slice_sorted: slice_sorted,
-//             u_edges: u_edges,
-//             d_edges: d_edges,
-//             corners: corners,
-//             ud_edges: ud_edges,
-//             flipslice_classidx: flipslice_classidx,
-//             flipslice_sym: flipslice_sym,
-//             flipslice_rep: flipslice_rep,
-//             corner_classidx: corner_classidx,
-//             corner_sym: corner_sym,
-//             corner_rep: corner_rep,
-//         })
-//     }
-// }
-
 impl fmt::Display for CoordCube {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // write!(f, "{:?}", self)
@@ -112,6 +64,9 @@ impl fmt::Display for CoordCube {
 
 impl CoordCube {
 
+    /// Build a CoordCube from CubieCube(cc).
+    /// 
+    /// Because `TryFrom(fn try_from)` can only take one argument, but we reference SymmetriesTables, so create this function.
     pub fn from_cubie(cc: &CubieCube, sy: &SymmetriesTables) -> Result<Self, Error> {
         if !cc.is_solvable() {
             return Err(Error::InvalidCubieValue);
@@ -158,7 +113,8 @@ impl CoordCube {
         })
     }
 
-    /// Update phase 1 coordinates when move is apply
+    /// Update phase 1 coordinates when move is apply.
+    /// 
     /// :param m: The move
     pub fn phase1_move(&mut self, m: moves::Move) {
         let twist_move = moves::move_twist().unwrap();
@@ -193,7 +149,8 @@ impl CoordCube {
         self.corner_rep = corner_rep[self.corner_classidx as usize];
     }
 
-    /// Update phase 2 coordinates when move is appli
+    /// Update phase 2 coordinates when move is apply.
+    /// 
     /// :param m: The move
     pub fn phase2_move(&mut self, m: moves::Move) {
         let slice_sorted_move = moves::move_slice_sorted().unwrap();
@@ -211,6 +168,8 @@ impl CoordCube {
 
 }
 
+/// EdgeMergeTables stores the initial phase 2 ud_edges coordinate from the u_edges and d_edges coordinates.
+/// 
 pub struct EdgeMergeTables {
     pub upd_ud_edges: Vec<u16>,
 }
@@ -224,7 +183,7 @@ impl EdgeMergeTables {
 }
 
 /// phase2_edgemerge retrieves the initial phase 2 ud_edges coordinate from the u_edges and d_edges coordinates.
-pub fn create_phase2_edgemerge_table() -> Result<Vec<u16>, Error> {
+fn create_phase2_edgemerge_table() -> Result<Vec<u16>, Error> {
     let fname = "tables/phase2_edgemerge";
     let mut u_edges_plus_d_edges_to_ud_edges: Vec<u16> = vec![0; N_U_EDGES_PHASE2 * N_PERM_4];
     let mut c_u = CubieCube::default();

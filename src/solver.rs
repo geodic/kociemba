@@ -1,9 +1,3 @@
-/** Solve a cube defined by its cube definition string.
-    :param cubestring: The format of the string is given in the Facelet class defined in the file enums.py
-    :param max_length: The function will return if a maneuver of length <= max_length has been found
-    :param timeout: If the function times out, the best solution found so far is returned. If there has not been found
-    any solution yet the computation continues until a first solution appears.
-*/
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::os::windows::io::HandleOrInvalid;
@@ -47,6 +41,27 @@ impl SolverTables {
         }
     }
 }
+
+/// Solve a cube defined by its cube definition string.
+/// # Parameters
+///    `cubestring`: The format of the string is given in the Facelet class defined.
+///
+///    `max_length`: The function will return if a maneuver of length <= max_length has been found
+///
+///    `timeout`: If the function times out, the best solution found so far is returned. If there has not been found
+///     any solution yet the computation continues until a first solution appears.
+/// # Examples
+/// ```rust
+/// use kociemba::solver::solve;
+/// 
+/// fn main() {
+///     let _ = solve(
+///     "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
+///     20,
+///     3.0,);
+/// }
+/// ```
+
 
 pub fn solve(cubestring: &str, max_length: usize, timeout: f64) -> Result<bool, Error> {
     let fc = FaceCube::try_from(cubestring).unwrap();
@@ -117,20 +132,28 @@ pub fn solve(cubestring: &str, max_length: usize, timeout: f64) -> Result<bool, 
 }
 
 /** The SolverThread class solves implements the two phase algorithm.
+
 cb_cube: The cube to be solved in CubieCube representation
+
 rot: Rotates the  cube 120° * rot along the long diagonal before applying the two-phase-algorithm
+
 inv: 0: Do not invert the cube . 1: Invert the cube before applying the two-phase-algorithm
+
 ret_length: If a solution with length <= ret_length is found the search stops.
  The most efficient way to solve a cube is to start six threads in parallel with rot = 0, 1 and 2 and
  inv = 0, 1. The first thread which finds a solutions sets the terminated flag which signals all other threads
  to teminate. On average this solves a cube about 12 times faster than solving one cube with a single thread.
- And this despite of Pythons GlobalInterpreterLock GIL.
+
 timeout: Essentially the maximal search time in seconds. Essentially because the search does not return
  before at least one solution has been found.
+
 start_time: The time the search started.
+
 solutions: An array with the found solutions found by the six parallel threads
+
 terminated: An event shared by the six threads to signal a termination request
-shortest_length: The length of the shortes solutions in the solution array
+
+shortest_length: The length of the shortest solutions in the solution array
 */
 pub struct SolverThread<'a> {
     cb_cube: CubieCube,
@@ -185,8 +208,9 @@ impl<'a> SolverThread<'a> {
     }
 
     /// Compute the distance to the cube subgroup H where flip=slice=twist=0
+    /// 
     /// :return: The distance to H
-    pub fn get_depth_phase1(&self) -> u32 {
+    fn get_depth_phase1(&self) -> u32 {
         let mut slice_ = self.co_cube.slice_sorted / N_PERM_4 as u16;
         let mut flip = self.co_cube.flip;
         let mut twist = self.co_cube.twist;
@@ -233,11 +257,14 @@ impl<'a> SolverThread<'a> {
     /**
     Get distance to subgroup where only the UD-slice edges may be permuted in their slice (only 24/2 = 12 possible
     ways due to overall even parity). This is a lower bound for the number of moves to solve phase 2.
-    :param corners: Corners coordinate
-    :param ud_edges: Coordinate of the 8 edges of U and D face.
+
+    corners: Corners coordinate
+
+    ud_edges: Coordinate of the 8 edges of U and D face.
+
     :return:
     */
-    pub fn get_depth_phase2(&self, corners: u16, ud_edges: u16) -> u16 {
+    fn get_depth_phase2(&self, corners: u16, ud_edges: u16) -> u16 {
         let mut corners = corners;
         let mut ud_edges = ud_edges;
         let classidx = self.solvertables.sy.corner_classidx[corners as usize];
@@ -295,7 +322,7 @@ impl<'a> SolverThread<'a> {
     }
 
     /// search_phase2
-    pub fn search_phase2(
+    fn search_phase2(
         &mut self,
         corners: u16,
         ud_edges: u16,
@@ -338,7 +365,6 @@ impl<'a> SolverThread<'a> {
                     );
                 }
                 man = newman;
-                // println!("solution: {:?}", man);
                 self.shortest_length[0] = man.len();
                 // let mut solutions = self.solutions.lock().unwrap();
                 (*solutions).push(man);
@@ -422,7 +448,7 @@ impl<'a> SolverThread<'a> {
         true
     }
 
-    pub fn search(
+    fn search(
         &mut self,
         flip: u16,
         twist: u16,
@@ -570,9 +596,10 @@ impl<'a> SolverThread<'a> {
         Ok(false)
     }
 
+    /// Start solverthreads to find solutions.
     pub fn run(&mut self) {
         let mut cb = CubieCube::default();
-        let sc = symmetries::sc();
+        let sc = &self.solvertables.sy.sc;
         if self.rot == 0 {
             // no rotation
             cb = CubieCube {

@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{cubie::CubieCube, error::Error};
 
-/// Names the colors of the cube facelets: up, right, face, down, left, back.
+/// Names the colors of the cube facelets: up, right, front, down, left, back.
 #[rustfmt::skip]
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
 pub enum Color {
@@ -31,8 +31,11 @@ impl TryFrom<char> for Color {
 }
 
 /// Cube on the facelet level.
+/// 
 /// The facelet representation follows the ordering: U-R-F-D-L-B.
+/// 
 /// A solved facelet is UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB.
+/// 
 #[derive(Debug, PartialEq)]
 pub struct FaceCube {
     pub f: [Color; 54],

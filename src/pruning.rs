@@ -2,16 +2,17 @@ use crate::constants::*;
 use crate::cubie::CubieCube;
 use crate::moves::{self, Move, MoveTables};
 use crate::symmetries::{self, SymmetriesTables};
-/** The pruning tables cut the search tree during the search.
-The pruning values are stored modulo 3 which saves a lot of memory.
-*/
 use crate::{decode_table, write_table};
 
+/// The pruning tables cut the search tree during the search.
+/// 
+/// The pruning values are stored modulo 3 which saves a lot of memory.
 pub struct PrunningTables {
     pub flipslice_twist_depth3: Vec<u32>,
     pub corners_ud_edges_depth3: Vec<u32>,
     pub cornslice_depth: Vec<u16>,
     /// array distance computes the new distance from the old_distance i and the new_distance_mod3 j.
+    /// 
     /// We need this array because the pruning tables only store the distances mod 3
     pub distance: Vec<u16>,
 }
@@ -41,8 +42,8 @@ impl Default for PrunningTables {
 }
 
 impl PrunningTables {
-    // functions to extract or set values in the pruning tables
-
+    /// functions to extract or set values in the pruning tables
+    /// 
     /// get_flipslice_twist_depth3(ix) is *exactly* the number of moves % 3 to solve phase 1 of a cube with index ix
     pub fn get_flipslice_twist_depth3(&self, ix: usize) -> u32 {
         let mut y = self.flipslice_twist_depth3[ix / 16];
@@ -80,23 +81,13 @@ impl PrunningTables {
         let flipslice_classidx = &sy.flipslice_classidx;
         let flipslice_sym = &sy.flipslice_sym;
         let flipslice_rep = &sy.flipslice_rep;
-        // let flipslicesyms = symmetries::flipslice_syms().unwrap();
-        // let flipslice_classidx = flipslicesyms.classidx;
-        // let flipslice_sym = flipslicesyms.sym;
-        // let flipslice_rep = flipslicesyms.rep;
 
         let sc = &sy.sc;
-        // let sc = symmetries::sc();
         let inv_idx = &sy.inv_idx;
-        // let inv_idx = symmetries::inv_idx();
         let twist_conj = &sy.twist_conj;
-        // let twist_conj = symmetries::conj_twist().unwrap();
         let twist_move = &mv.twist_move;
         let flip_move = &mv.flip_move;
         let slice_sorted_move = &mv.slice_sorted_move;
-        // let twist_move = moves::move_twist().unwrap();
-        // let flip_move = moves::move_flip().unwrap();
-        // let slice_sorted_move = moves::move_slice_sorted().unwrap();
 
         if phase1_prun_table.is_empty() {
             println!("Creating {} table...", fname);
@@ -259,30 +250,14 @@ impl PrunningTables {
         let fname = "tables/phase2_prun";
         let phase2_prun_table = std::fs::read(&fname).unwrap_or("".into());
         let mut fs_sym = vec![0; N_FLIPSLICE_CLASS];
-        // let flipslice_classidx = &sy.flipslice_classidx;
-        // let flipslice_sym = &sy.flipslice_sym;
-        // let flipslice_rep = &sy.flipslice_rep;
-        // let flipslice = symmetries::flipslice_syms().unwrap();
-        // let flipslice_rep = flipslice.rep;
-        // let flipslice_classidx = flipslice.classidx;
-        // let flipslice_sym = flipslice.sym;
         let corner_classidx = &sy.corner_classidx;
         let corner_sym = &sy.corner_sym;
         let corner_rep = &sy.corner_rep;
-        // let cornersyms = symmetries::corner_syms().unwrap();
-        // let corner_rep = cornersyms.rep;
-        // let corner_sym = cornersyms.sym;
-        // let corner_classidx = cornersyms.classidx;
         let sc = &sy.sc;
-        // let sc = symmetries::sc();
         let inv_idx = sy.inv_idx;
-        // let inv_idx = symmetries::inv_idx();
         let ud_edges_conj = &sy.ud_edges_conj;
-        // let ud_edges_conj = symmetries::conj_ud_edges().unwrap();
         let ud_edges_move = &mv.ud_edges_move;
         let corners_move = &mv.corners_move;
-        // let ud_edges_move = moves::move_ud_edges().unwrap();
-        // let corners_move = moves::move_corners().unwrap();
         if phase2_prun_table.is_empty() {
             println!("Creating {} table...", fname);
             // create table with the symmetries of the corners classes
@@ -410,15 +385,14 @@ impl PrunningTables {
         }
     }
 
-    /// Create/load the cornslice_depth pruning table for phase 2. With this table we do a fast precheck
-    /// at the beginning of phase 2.
+    /// Create/load the cornslice_depth pruning table for phase 2. 
+    /// 
+    /// With this table we do a fast precheck at the beginning of phase 2.
     pub fn create_phase2_cornsliceprun_table(&mut self, mv: &MoveTables) {
         let fname = "tables/phase2_cornsliceprun";
         let phase2_cornsliceprun_table = std::fs::read(&fname).unwrap_or("".into());
         let corners_move = &mv.corners_move;
-        // let corners_move = moves::move_corners().unwrap();
         let slice_sorted_move = &mv.slice_sorted_move;
-        // let slice_sorted_move = moves::move_slice_sorted().unwrap();
 
         if phase2_cornsliceprun_table.is_empty() {
             println!("Creating {} table...", fname);

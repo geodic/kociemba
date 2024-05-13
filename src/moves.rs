@@ -7,6 +7,7 @@ use crate::{decode_table, write_table};
 use crate::{error::Error, facelet::Color};
 
 /// Layer moves, Up, Right, Front, Down, Face, Back.
+/// 
 /// $ clockwise, $2 double, $3 counter-clockwise.
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
@@ -105,6 +106,8 @@ impl Move {
 }
 
 /// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// U_MOVE
 pub const U_MOVE: CubieCube = CubieCube {
     cp: [UBR, URF, UFL, ULB, DFR, DLF, DBL, DRB],
     co: [0, 0, 0, 0, 0, 0, 0, 0],
@@ -112,6 +115,9 @@ pub const U_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
+/// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// R_MOVE
 pub const R_MOVE: CubieCube = CubieCube {
     cp: [DFR, UFL, ULB, URF, DRB, DLF, DBL, UBR], //permutation of the corners
     co: [2, 0, 0, 1, 1, 0, 0, 2],                 //changes of the orientations of the corners
@@ -119,6 +125,9 @@ pub const R_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],     //changes of the permutations of the edges
 };
 
+/// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// F_MOVE
 pub const F_MOVE: CubieCube = CubieCube {
     cp: [UFL, DLF, ULB, UBR, URF, DFR, DBL, DRB],
     co: [1, 2, 0, 0, 2, 1, 0, 0],
@@ -126,6 +135,9 @@ pub const F_MOVE: CubieCube = CubieCube {
     eo: [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0],
 };
 
+/// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// D_MOVE
 pub const D_MOVE: CubieCube = CubieCube {
     cp: [URF, UFL, ULB, UBR, DLF, DBL, DRB, DFR],
     co: [0, 0, 0, 0, 0, 0, 0, 0],
@@ -133,6 +145,9 @@ pub const D_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
+/// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// L_MOVE
 pub const L_MOVE: CubieCube = CubieCube {
     cp: [URF, ULB, DBL, UBR, DFR, UFL, DLF, DRB],
     co: [0, 1, 2, 0, 0, 2, 1, 0],
@@ -140,6 +155,9 @@ pub const L_MOVE: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
+/// The basic six cube moves described by permutations and changes in orientation.
+/// 
+/// B_MOVE
 pub const B_MOVE: CubieCube = CubieCube {
     cp: [URF, UFL, UBR, DRB, DFR, DLF, ULB, DBL],
     co: [0, 0, 1, 2, 0, 0, 2, 1],
@@ -172,7 +190,9 @@ impl MoveTables {
 }
 
 /// Move table for the twists of the corners.
+/// 
 /// The twist coordinate describes the 3^7 = 2187 possible orientations of the 8 corners
+/// 
 /// 0 <= twist < 2187 in phase 1, twist = 0 in phase 2
 pub fn move_twist() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
@@ -202,8 +222,10 @@ pub fn move_twist() -> Result<Vec<u16>, Error> {
     Ok(twist_move)
 }
 
-/// Move table for the flip of the edges. ##########################################
+/// Move table for the flip of the edges.
+/// 
 /// The flip coordinate describes the 2^11 = 2048 possible orientations of the 12 edges
+/// 
 /// 0 <= flip < 2048 in phase 1, flip = 0 in phase 2
 pub fn move_flip() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
@@ -232,9 +254,12 @@ pub fn move_flip() -> Result<Vec<u16>, Error> {
 }
 
 /// Move table for the four UD-slice edges FR, FL, Bl and BR.
+/// 
 /// The slice_sorted coordinate describes the 12!/8! = 11880 possible positions of the FR, FL, BL and BR edges.
+/// 
 /// Though for phase 1 only the "unsorted" slice coordinate with Binomial(12,4) = 495 positions is relevant, using the
 /// slice_sorted coordinate gives us the permutation of the FR, FL, BL and BR edges at the beginning of phase 2 for free.
+/// 
 /// 0 <= slice_sorted < 11880 in phase 1, 0 <= slice_sorted < 24 in phase 2, slice_sorted = 0 for solved cube
 pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
@@ -266,8 +291,10 @@ pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
 }
 
 /// Move table for the u_edges coordinate for transition phase 1 -> phase 2
+/// 
 /// The u_edges coordinate describes the 12!/8! = 11880 possible positions of the UR, UF, UL and UB edges. It is needed at
 /// the end of phase 1 to set up the coordinates of phase 2
+/// 
 /// 0 <= u_edges < 11880 in phase 1, 0 <= u_edges < 1680 in phase 2, u_edges = 1656 for solved cube.
 pub fn move_u_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
@@ -299,9 +326,11 @@ pub fn move_u_edges() -> Result<Vec<u16>, Error> {
 }
 
 /// Move table for the d_edges coordinate for transition phase 1 -> phase 2
-/// # The d_edges coordinate describes the 12!/8! = 11880 possible positions of the DR, DF, DL and DB edges. It is needed at
-/// # the end of phase 1 to set up the coordinates of phase 2
-/// #  0 <= d_edges < 11880 in phase 1, 0 <= d_edges < 1680 in phase 2, d_edges = 0 for solved cube.
+/// 
+/// The d_edges coordinate describes the 12!/8! = 11880 possible positions of the DR, DF, DL and DB edges. It is needed at
+/// the end of phase 1 to set up the coordinates of phase 2
+/// 
+/// 0 <= d_edges < 11880 in phase 1, 0 <= d_edges < 1680 in phase 2, d_edges = 0 for solved cube.
 pub fn move_d_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
@@ -332,7 +361,9 @@ pub fn move_d_edges() -> Result<Vec<u16>, Error> {
 }
 
 /// Move table for the edges in the U-face and D-face.
+/// 
 /// The ud_edges coordinate describes the 40320 permutations of the edges UR, UF, UL, UB, DR, DF, DL and DB in phase 2
+/// 
 /// ud_edges undefined in phase 1, 0 <= ud_edges < 40320 in phase 2, ud_edges = 0 for solved cube.
 pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
@@ -373,7 +404,9 @@ pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
 }
 
 /// Move table for the corners coordinate in phase 2
+/// 
 /// The corners coordinate describes the 8! = 40320 permutations of the corners.
+/// 
 /// 0 <= corners < 40320 defined but unused in phase 1, 0 <= corners < 40320 in phase 2, corners = 0 for solved cube
 pub fn move_corners() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();

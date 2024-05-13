@@ -9,7 +9,8 @@ use crate::symmetries;
 use crate::{facelet::*, moves::*};
 
 /// Represents the 8 corners on the cube, described by the layer they are on.
-/// Example: UBL (Up, Bottom, Left).
+/// 
+/// Example: `ULB` (Up, Left, Bottom).
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
@@ -42,7 +43,8 @@ impl TryFrom<u8> for Corner {
 }
 
 /// Represents the 12 edges on the cube, described by the layer they are on.
-/// Example: BL (Bottom, Left).
+/// 
+/// Example: `BL` (Bottom, Left).
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
@@ -143,7 +145,81 @@ impl fmt::Display for CubieCube {
     }
 }
 
+
+impl From<&Vec<Move>> for CubieCube {
+    fn from(moves: &Vec<Move>) -> Self {
+        CubieCube::default().apply_moves(moves)
+    }
+}
+
+/// Gives cubie representation of a face cube (facelet).
+impl TryFrom<&FaceCube> for CubieCube {
+    type Error = Error;
+    fn try_from(face_cube: &FaceCube) -> Result<Self, Self::Error> {
+        let mut state = CubieCube::default();
+        let mut ori: usize = 0;
+        let mut col1;
+        let mut col2;
+
+        for i in 0..8 {
+            let i = Corner::try_from(i)?;
+            // get the colors of the cubie at corner i, starting with U/D
+            for index in 0..3 {
+                ori = index;
+                if face_cube.f[CORNER_FACELET[i as usize][ori] as usize] == Color::U
+                    || face_cube.f[CORNER_FACELET[i as usize][ori] as usize] == Color::D
+                {
+                    break;
+                }
+            }
+
+            col1 = face_cube.f[CORNER_FACELET[i as usize][(ori + 1) % 3] as usize];
+            col2 = face_cube.f[CORNER_FACELET[i as usize][(ori + 2) % 3] as usize];
+
+            for j in 0..8 {
+                let j = Corner::try_from(j)?;
+                if col1 == CORNER_COLOR[j as usize][1] && col2 == CORNER_COLOR[j as usize][2] {
+                    // in cornerposition i we have cornercubie j
+                    state.cp[i as usize] = j;
+                    state.co[i as usize] = ori as u8 % 3;
+                    break;
+                }
+            }
+        }
+
+        for i in 0..12 {
+            let i = Edge::try_from(i)?;
+            for j in 0..12 {
+                let j = Edge::try_from(j)?;
+                if face_cube.f[EDGE_FACELET[i as usize][0] as usize] == EDGE_COLOR[j as usize][0]
+                    && face_cube.f[EDGE_FACELET[i as usize][1] as usize]
+                        == EDGE_COLOR[j as usize][1]
+                {
+                    state.ep[i as usize] = j;
+                    state.eo[i as usize] = 0;
+                    break;
+                }
+                if face_cube.f[EDGE_FACELET[i as usize][0] as usize] == EDGE_COLOR[j as usize][1]
+                    && face_cube.f[EDGE_FACELET[i as usize][1] as usize]
+                        == EDGE_COLOR[j as usize][0]
+                {
+                    state.ep[i as usize] = j;
+                    state.eo[i as usize] = 1;
+                    break;
+                }
+            }
+        }
+
+        if !state.is_solvable() {
+            Err(Error::InvalidFaceletValue)
+        } else {
+            Ok(state)
+        }
+    }
+}
+
 impl CubieCube {
+    /// Applies a move to the current state.
     pub fn apply_move(self, move_name: Move) -> Self {
         let move_state = match move_name {
             U => U_MOVE,
@@ -230,7 +306,7 @@ impl CubieCube {
         has_even_permutation && has_valid_twist
     }
 
-    /// Multiply this cubie cube with another cubie cube b, restricted to the corners. Does not change b.
+    /// Multiply this cubie cube with another cubie cube b, restricted to the corners.
     pub fn corner_multiply(&mut self, b: CubieCube) {
         let mut c_perm = [URF; 8];
         let mut c_ori = [0; 8];
@@ -276,7 +352,7 @@ impl CubieCube {
         }
     }
 
-    /// Multiply this cubie cube with another cubiecube b, restricted to the edges. Does not change b.
+    /// Multiply this cubie cube with another cubie cube b, restricted to the edges.
     pub fn edge_multiply(&mut self, b: CubieCube) {
         let mut e_perm: [Edge; 12] = [UR; 12];
         let mut e_ori = [0; 12];
@@ -292,12 +368,13 @@ impl CubieCube {
         }
     }
 
+    /// Multiply this cubie cube with another cubie cube b.
     pub fn multiply(&mut self, b: CubieCube) {
         self.corner_multiply(b);
         self.edge_multiply(b);
     }
 
-    /// Return the inverse of this cubie cube.
+    /// Return the inverse of this cubiecube.
     pub fn inverse_cubie_cube(&self) -> Self {
         let mut d = CubieCube::default();
         for ei in ALL_EDGES {
@@ -380,7 +457,7 @@ impl CubieCube {
         s
     }
 
-    ///Get the twist of the 8 corners. 0 <= twist < 2187 in phase 1, twist = 0 in phase 2.
+    /// Get the twist of the 8 corners. 0 <= twist < 2187 in phase 1, twist = 0 in phase 2.
     pub fn get_twist(&self) -> u16 {
         let mut twist: u16 = 0;
         for i in (URF as usize)..(DRB as usize) {
@@ -389,6 +466,7 @@ impl CubieCube {
         twist
     }
 
+    /// Set the twist of the 8 corners. 0 <= twist < 2187 in phase 1, twist = 0 in phase 2.
     pub fn set_twist(&mut self, twist: u16) {
         let mut twistparity = 0;
         let mut twist = twist;
@@ -409,6 +487,7 @@ impl CubieCube {
         ret
     }
 
+    /// Set the flip of the 12 edges. 0 <= flip < 2048 in phase 1, flip = 0 in phase 2.
     pub fn set_flip(&mut self, flip: u16) {
         let mut flipparity = 0;
         let mut flip = flip;
@@ -421,6 +500,7 @@ impl CubieCube {
     }
 
     /// Get the location of the UD-slice edges FR,FL,BL and BR ignoring their permutation.
+    /// 
     /// 0<= slice < 495 in phase 1, slice = 0 in phase 2.
     pub fn get_slice(&self) -> u16 {
         let mut a = 0;
@@ -435,15 +515,14 @@ impl CubieCube {
         a as u16
     }
 
+    /// Set the location of the UD-slice edges FR,FL,BL and BR ignoring their permutation.
+    /// 
+    /// 0<= slice < 495 in phase 1, slice = 0 in phase 2.
     pub fn set_slice(&mut self, idx: u16) {
         let slice_edge = [FR, FL, BL, BR];
-        // slice_edge.reverse();
         let other_edge = [UR, UF, UL, UB, DR, DF, DL, DB];
         let mut a = idx; // Location
         let mut ep = [-1; 12];
-        // for e in ALL_EDGES {
-        //     ep[e as usize] = -1; // Invalidate all edge positions
-        // }
 
         let mut x: i32 = 4; // set slice edges
         for j in ALL_EDGES {
@@ -464,6 +543,7 @@ impl CubieCube {
     }
 
     /// Get the permutation and location of the UD-slice edges FR,FL,BL and BR.
+    /// 
     /// 0 <= slice_sorted < 11880 in phase 1, 0 <= slice_sorted < 24 in phase 2, slice_sorted = 0 for solved cube.
     pub fn get_slice_sorted(&self) -> u16 {
         let mut a = 0;
@@ -490,6 +570,9 @@ impl CubieCube {
         24 * a as u16 + b as u16
     }
 
+    /// Set the permutation and location of the UD-slice edges FR,FL,BL and BR.
+    /// 
+    /// 0 <= slice_sorted < 11880 in phase 1, 0 <= slice_sorted < 24 in phase 2, slice_sorted = 0 for solved cube.
     pub fn set_slice_sorted(&mut self, idx: u16) {
         let mut slice_edge = [FR, FL, BL, BR];
         let other_edge = [UR, UF, UL, UB, DR, DF, DL, DB];
@@ -528,6 +611,7 @@ impl CubieCube {
     }
 
     /// Get the permutation and location of edges UR, UF, UL and UB.
+    /// 
     /// 0 <= u_edges < 11880 in phase 1, 0 <= u_edges < 1680 in phase 2, u_edges = 1656 for solved cube.
     pub fn get_u_edges(&self) -> u16 {
         let mut a = 0;
@@ -558,6 +642,9 @@ impl CubieCube {
         24 * a as u16 + b as u16
     }
 
+    /// Set the permutation and location of edges UR, UF, UL and UB.
+    /// 
+    /// 0 <= u_edges < 11880 in phase 1, 0 <= u_edges < 1680 in phase 2, u_edges = 1656 for solved cube.
     pub fn set_u_edges(&mut self, idx: u16) {
         let mut slice_edge = [UR, UF, UL, UB];
         let other_edge = [DR, DF, DL, DB, FR, FL, BL, BR];
@@ -599,6 +686,7 @@ impl CubieCube {
     }
 
     /// Get the permutation and location of the edges DR, DF, DL and DB.
+    /// 
     /// 0 <= d_edges < 11880 in phase 1, 0 <= d_edges < 1680 in phase 2, d_edges = 0 for solved cube.
     pub fn get_d_edges(&self) -> u16 {
         let mut a = 0;
@@ -629,6 +717,9 @@ impl CubieCube {
         24 * a as u16 + b as u16
     }
 
+    /// Set the permutation and location of the edges DR, DF, DL and DB.
+    /// 
+    /// 0 <= d_edges < 11880 in phase 1, 0 <= d_edges < 1680 in phase 2, d_edges = 0 for solved cube.
     pub fn set_d_edges(&mut self, idx: u16) {
         let mut slice_edge = [DR, DF, DL, DB];
         let other_edge = [FR, FL, BL, BR, UR, UF, UL, UB];
@@ -669,9 +760,11 @@ impl CubieCube {
         }
     }
 
-    /** Get the permutation of the 8 corners.
-    0 <= corners < 40320 defined but unused in phase 1, 0 <= corners < 40320 in phase 2,
-    corners = 0 for solved cube */
+    /// Get the permutation of the 8 corners.
+    /// 
+    /// 0 <= corners < 40320 defined but unused in phase 1, 0 <= corners < 40320 in phase 2,
+    /// 
+    /// corners = 0 for solved cube
     pub fn get_corners(&self) -> u16 {
         let mut perm = self.cp.clone(); // duplicate cp
         let mut b = 0;
@@ -686,6 +779,11 @@ impl CubieCube {
         b as u16
     }
 
+    /// Set the permutation of the 8 corners.
+    /// 
+    /// 0 <= corners < 40320 defined but unused in phase 1, 0 <= corners < 40320 in phase 2,
+    /// 
+    /// corners = 0 for solved cube
     pub fn set_corners(&mut self, idx: u16) {
         self.cp = ALL_CORNERS.clone();
         let mut x = idx;
@@ -700,6 +798,7 @@ impl CubieCube {
     }
 
     /// Get the permutation of the 8 U and D edges.
+    /// 
     /// ud_edges undefined in phase 1, 0 <= ud_edges < 40320 in phase 2, ud_edges = 0 for solved cube.
     pub fn get_ud_edges(&self) -> u16 {
         let mut perm = [UR; 8];
@@ -718,6 +817,9 @@ impl CubieCube {
         b as u16
     }
 
+    /// Set the permutation of the 8 U and D edges.
+    /// 
+    /// ud_edges undefined in phase 1, 0 <= ud_edges < 40320 in phase 2, ud_edges = 0 for solved cube.
     pub fn set_ud_edges(&mut self, idx: usize) {
         let mut x: usize = idx;
         // positions of FR FL BL BR edges are not affected
@@ -734,7 +836,7 @@ impl CubieCube {
         }
     }
 
-    ///Generate a random cube. The probability is the same for all possible states.
+    /// Generate a random cube. The probability is the same for all possible states.
     pub fn randomize(&mut self) {
         // The permutation of the 12 edges. 0 <= idx < 12!."""
         let mut idx = random::<usize>() % 479001600; // 12!
@@ -870,78 +972,6 @@ pub fn c_nk(n: u32, k: u32) -> u32 {
         j += 1;
     }
     s
-}
-
-impl From<&Vec<Move>> for CubieCube {
-    fn from(moves: &Vec<Move>) -> Self {
-        CubieCube::default().apply_moves(moves)
-    }
-}
-
-/// Gives cubie representation of a face cube (facelet).
-impl TryFrom<&FaceCube> for CubieCube {
-    type Error = Error;
-    fn try_from(face_cube: &FaceCube) -> Result<Self, Self::Error> {
-        let mut state = CubieCube::default();
-        let mut ori: usize = 0;
-        let mut col1;
-        let mut col2;
-
-        for i in 0..8 {
-            let i = Corner::try_from(i)?;
-            // get the colors of the cubie at corner i, starting with U/D
-            for index in 0..3 {
-                ori = index;
-                if face_cube.f[CORNER_FACELET[i as usize][ori] as usize] == Color::U
-                    || face_cube.f[CORNER_FACELET[i as usize][ori] as usize] == Color::D
-                {
-                    break;
-                }
-            }
-
-            col1 = face_cube.f[CORNER_FACELET[i as usize][(ori + 1) % 3] as usize];
-            col2 = face_cube.f[CORNER_FACELET[i as usize][(ori + 2) % 3] as usize];
-
-            for j in 0..8 {
-                let j = Corner::try_from(j)?;
-                if col1 == CORNER_COLOR[j as usize][1] && col2 == CORNER_COLOR[j as usize][2] {
-                    // in cornerposition i we have cornercubie j
-                    state.cp[i as usize] = j;
-                    state.co[i as usize] = ori as u8 % 3;
-                    break;
-                }
-            }
-        }
-
-        for i in 0..12 {
-            let i = Edge::try_from(i)?;
-            for j in 0..12 {
-                let j = Edge::try_from(j)?;
-                if face_cube.f[EDGE_FACELET[i as usize][0] as usize] == EDGE_COLOR[j as usize][0]
-                    && face_cube.f[EDGE_FACELET[i as usize][1] as usize]
-                        == EDGE_COLOR[j as usize][1]
-                {
-                    state.ep[i as usize] = j;
-                    state.eo[i as usize] = 0;
-                    break;
-                }
-                if face_cube.f[EDGE_FACELET[i as usize][0] as usize] == EDGE_COLOR[j as usize][1]
-                    && face_cube.f[EDGE_FACELET[i as usize][1] as usize]
-                        == EDGE_COLOR[j as usize][0]
-                {
-                    state.ep[i as usize] = j;
-                    state.eo[i as usize] = 1;
-                    break;
-                }
-            }
-        }
-
-        if !state.is_solvable() {
-            Err(Error::InvalidFaceletValue)
-        } else {
-            Ok(state)
-        }
-    }
 }
 
 #[cfg(test)]

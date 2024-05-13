@@ -2,6 +2,7 @@ use bincode::error::{DecodeError, EncodeError};
 use std::io;
 use thiserror::Error;
 
+/// Errors.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Invalid color value")]
