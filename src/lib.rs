@@ -42,7 +42,7 @@ use bincode::{
     Decode, Encode,
 };
 use crate::error::Error;
-use crate::{cubie::CubieCube, moves::Move};
+use crate::moves::Move;
 
 const CONFIG: Configuration = config::standard();
 

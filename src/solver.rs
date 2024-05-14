@@ -732,8 +732,6 @@ impl<'a> SolverThread<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::result;
-
     use crate::moves::Move::*;
     use crate::solver::*;
 

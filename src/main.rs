@@ -1,10 +1,10 @@
-use clap::{arg, command, Parser, Subcommand, ValueEnum};
+use clap::{arg, command, Parser, Subcommand};
 use crossterm::{
     cursor::{MoveLeft, MoveRight, MoveUp},
     execute,
     style::{Attribute, Color as TermColor, SetBackgroundColor, Stylize},
 };
-use kociemba::{cubie::CubieCube, facelet::FaceCube, solver::solve as solver, symmetries::sc};
+use kociemba::{cubie::CubieCube, facelet::FaceCube, scramble::scramble_to_str, solver::solve as solver};
 use kociemba::{error::Error, facelet::Color, scramble::scramble_from_str};
 use rand::random;
 use spinners::Spinner;
@@ -39,42 +39,21 @@ enum Commands {
         #[arg(short, long, default_value_t = 23)]
         max: usize,
 
-        #[arg(short, long)]
+        #[arg(short, long, default_value_t = 3.0)]
         timeout: f32,
 
         #[arg(short, long)]
-        details: bool,
+        verbose: bool,
 
         #[arg(short, long)]
         preview: bool,
-    },
-    Tpsolver {
-        #[arg(short, long)]
-        facelet: Option<String>,
     },
 
     #[command(about = "generates scramble")]
     Scramble {
-        #[arg(default_value = "random")]
-        state: State,
-
-        #[arg(short, long, default_value_t = 25)]
-        number: usize,
-
         #[arg(short, long)]
         preview: bool,
     },
-}
-
-#[derive(ValueEnum, Clone)]
-enum State {
-    Random,
-    // CrossSolved,
-    // F2LSolved,
-    // OllSolved,
-    // OllCrossSolved,
-    // EdgesSolved,
-    // CornersSolved,
 }
 
 fn solve(
@@ -82,7 +61,7 @@ fn solve(
     facelet: &Option<String>,
     max: usize,
     timeout: f32,
-    details: bool,
+    verbose: bool,
     preview: bool,
 ) -> Result<(), Error> {
     if let Some(scramble) = scramble {
@@ -92,57 +71,43 @@ fn solve(
             let facelet = FaceCube::try_from(&state)?;
             print_facelet(&facelet)?;
         }
-        solve_scramble(scramble, max, timeout, details)?;
+        solve_scramble(scramble, max, timeout, verbose)?;
     } else if let Some(facelet) = facelet {
         if preview {
             let facelet = FaceCube::try_from(facelet.as_str())?;
             print_facelet(&facelet)?;
         }
-        solve_facelet(facelet, max, timeout, details)?;
+        solve_facelet(facelet, max, timeout, verbose)?;
     }
     Ok(())
 }
 
-fn solve_state(state: CubieCube, max: usize, timeout: f32, details: bool) -> Result<(), Error> {
+fn solve_state(cubestring: &str, max: usize, timeout: f32, verbose: bool) -> Result<(), Error> {
     let start = Instant::now();
     let mut spinner = Spinner::new(spinners::Spinners::Dots, "Solving".to_owned());
-    let mut solution = solver(&state.to_string(), max, timeout);
-
-    // let  = solve(state);
+    let result = solver(&cubestring, max, timeout).unwrap();
     let end = Instant::now();
 
     spinner.stop_with_newline();
 
-    match solution {
-        Ok(value) => {
-            println!("Solution: {:?}", value);
-            println!("Move count: {}", value.solution.len())
-        }
-        _ => println!("No solution found"),
-    }
+    println!("Solution: {}", scramble_to_str(&result.solution).unwrap());
+    println!("Move count: {}", result.solution.len());
+    println!("Solve time: {:?}", result.solve_time);
+    println!("Total time: {:?}", end-start);
 
     Ok(())
 }
 
-fn solve_scramble(scramble: &str, max: usize, timeout: f32, details: bool) -> Result<(), Error> {
+fn solve_scramble(scramble: &str, max: usize, timeout: f32, verbose: bool) -> Result<(), Error> {
     let scramble = scramble_from_str(scramble)?;
     let state = CubieCube::from(&scramble);
+    let fc = FaceCube::try_from(&state).unwrap();
 
-    solve_state(state, max, timeout, details)
+    solve_state(&fc.to_string(), max, timeout, verbose)
 }
 
-fn solve_facelet(facelet: &str, max: usize, timeout: f32, details: bool) -> Result<(), Error> {
-    let solution = solver(facelet, max, timeout).unwrap();
-    println!("{:?}", solution);
-    Ok(())
-    // if let Ok(face_cube) = FaceCube::try_from(facelet) {
-    //     match CubieCube::try_from(&face_cube) {
-    //         Ok(state) => Ok(solve_state(state, max, timeout, details)?),
-    //         Err(_) => Err(Error::InvalidFaceletValue),
-    //     }
-    // } else {
-    //     Err(Error::InvalidFaceletString)
-    // }
+fn solve_facelet(facelet: &str, max: usize, timeout: f32, verbose: bool) -> Result<(), Error> {
+    solve_state(facelet, max, timeout, verbose)
 }
 
 fn color_to_termcolor(color: Color) -> TermColor {
@@ -198,61 +163,37 @@ fn print_facelet(facelet: &FaceCube) -> Result<(), io::Error> {
     Ok(())
 }
 
-fn tpsolver(facelet: &Option<String>) -> Result<(), Error> {
-    use kociemba::solver::solver;
-    let result = solver(
-        "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
-        "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
-        20,
-        3.0,
-    );
-    println!("{:?}", result);
-    Ok(())
-}
-fn scramble(state: &State, number: usize, preview: bool) -> Result<(), Error> {
+fn scramble(preview: bool) -> Result<(), Error> {
     let mut cc = CubieCube::default();
     cc.randomize();
     let fc = FaceCube::try_from(&cc)?;
-    print_facelet(&fc)?;
-    // println!("{}", fc.to_string());
     let mut ss = "".to_string();
-    let mut ps = 'R';
+    let mut ps = ' ';
     for s in fc.to_string().chars() {
         if s != ps {
+            if ps == ' ' {
+                ps = s;
+                continue;
+            }
             let suffix = match random::<u16>() % 3 {
                 0 => "",
                 1 => "2",
-                _ => "3",
+                _ => "'",
             };
             ss = ss + ps.to_string().as_str() + suffix.to_string().as_str() + " ";
-            // ss = ss + s.to_string().as_str() + "2 ";
-        } else {
-            // ss = ss + ps.to_string().as_str() + " " + s.to_string().as_str();
         }
         ps = s;
     }
-    println!("{}", ss);
-    let mut scramble = scramble_from_str(&ss).unwrap();
-    println!("{:?}", scramble);
+    let mut scramble = scramble_from_str(&ss.trim()).unwrap();
     let mut cc = CubieCube::default();
     scramble.truncate(25);
     cc = cc.apply_moves(&scramble);
     let fc = FaceCube::try_from(&cc).unwrap();
+    println!("Scramble: {}", scramble_to_str(&scramble).unwrap().trim());
     if preview {
         print_facelet(&fc)?;
     }
-    println!("{:?}", scramble);
     Ok(())
-    // let state = match state {
-    //     State::Random => {
-    // State::CrossSolved => generate_state_cross_solved(),
-    // State::F2LSolved => generate_state_f2l_solved(),
-    // State::OllSolved => generate_state_oll_solved(),
-    // State::OllCrossSolved => generate_state_oll_cross_solved(),
-    // State::EdgesSolved => generate_state_edges_solved(),
-    // State::CornersSolved => generate_state_corners_solved(),
-    // };
-    // let scramble = scramble_from_str(&state)?;
 }
 
 fn main() {
@@ -264,20 +205,17 @@ fn main() {
             facelet,
             max,
             timeout,
-            details,
+            verbose,
             preview,
-        }) => solve(scramble, facelet, *max, *timeout, *details, *preview),
+        }) => solve(scramble, facelet, *max, *timeout, *verbose, *preview),
         Some(Commands::Scramble {
-            state,
-            number,
             preview,
-        }) => scramble(state, *number, *preview),
-        Some(Commands::Tpsolver { facelet }) => tpsolver(facelet),
+        }) => scramble(*preview),
         _ => Ok(()),
     };
 
-    // if let Err(error) = result {
-    //     let styled = "error:".with(TermColor::Red).attribute(Attribute::Bold);
-    //     println!("{styled} {error}");
-    // }
+    if let Err(error) = result {
+        let styled = "error:".with(TermColor::Red).attribute(Attribute::Bold);
+        println!("{styled} {error}");
+    }
 }

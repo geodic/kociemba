@@ -1,7 +1,7 @@
 use crate::constants::*;
 use crate::cubie::CubieCube;
-use crate::moves::{self, Move, MoveTables};
-use crate::symmetries::{self, SymmetriesTables};
+use crate::moves::{Move, MoveTables};
+use crate::symmetries::SymmetriesTables;
 use crate::{decode_table, write_table};
 
 /// The pruning tables cut the search tree during the search.
@@ -239,7 +239,7 @@ impl PrunningTables {
             }
             write_table(fname, &self.flipslice_twist_depth3).unwrap();
         } else {
-            println!("Loading {} table...", fname);
+            // println!("Loading {} table...", fname);
             self.flipslice_twist_depth3 = decode_table(&phase1_prun_table).unwrap();
         }
     }
@@ -249,7 +249,6 @@ impl PrunningTables {
         let total = N_CORNERS_CLASS * N_UD_EDGES;
         let fname = "tables/phase2_prun";
         let phase2_prun_table = std::fs::read(&fname).unwrap_or("".into());
-        let mut fs_sym = vec![0; N_FLIPSLICE_CLASS];
         let corner_classidx = &sy.corner_classidx;
         let corner_sym = &sy.corner_sym;
         let corner_rep = &sy.corner_rep;
@@ -285,8 +284,8 @@ impl PrunningTables {
             }
             println!();
 
-            let mut c_classidx = 0; // value for solved phase 2
-            let mut ud_edge = 0;
+            let c_classidx = 0; // value for solved phase 2
+            let ud_edge = 0;
             self.set_corners_ud_edges_depth3(N_UD_EDGES * c_classidx + ud_edge, 0);
             let mut done = 1;
             let mut depth = 0;
@@ -380,7 +379,7 @@ impl PrunningTables {
             println!("remaining unfilled entries have depth >=11");
             write_table(fname, &self.corners_ud_edges_depth3).unwrap();
         } else {
-            println!("Loading {} table...", fname);
+            // println!("Loading {} table...", fname);
             self.corners_ud_edges_depth3 = decode_table(&phase2_prun_table).unwrap();
         }
     }
@@ -437,7 +436,7 @@ impl PrunningTables {
             println!();
             write_table(fname, &self.cornslice_depth).unwrap();
         } else {
-            println!("Loading {} table...", fname);
+            // println!("Loading {} table...", fname);
             self.cornslice_depth = decode_table(&phase2_cornsliceprun_table).unwrap();
         }
     }
@@ -447,65 +446,56 @@ impl PrunningTables {
 mod test {
     use crate::pruning::*;
 
-    // #[test]
-    // fn test_flipslice_twist_depth3() {
-    //     let mut pruningtable = PrunningTables::default();
-    //     pruningtable.create_phase1_prun_table();
+    #[test]
+    fn test_flipslice_twist_depth3() {
+        let sy = SymmetriesTables::new();
+        let mv = MoveTables::new();
+        let mut pruningtable = PrunningTables::default();
+        pruningtable.create_phase1_prun_table(&sy, &mv);
 
-    //     let flipslice_twist_depth3 = pruningtable.flipslice_twist_depth3;
-    //     assert_eq!(flipslice_twist_depth3.len(), 8806776);
-    //     assert_eq!(flipslice_twist_depth3[0], 1704289684);
-    //     assert_eq!(flipslice_twist_depth3[88], 136478754);
-    //     assert_eq!(flipslice_twist_depth3[136], 2824101892);
-    //     assert_eq!(flipslice_twist_depth3[271], 291852549);
-    //     assert_eq!(flipslice_twist_depth3[8806], 341067092);
-    //     assert_eq!(flipslice_twist_depth3[880677], 136971537);
-    //     assert_eq!(flipslice_twist_depth3[8806775], 4294517857);
-    // }
+        let flipslice_twist_depth3 = pruningtable.flipslice_twist_depth3;
+        assert_eq!(flipslice_twist_depth3.len(), 8806776);
+        assert_eq!(flipslice_twist_depth3[0], 1704289684);
+        assert_eq!(flipslice_twist_depth3[88], 136478754);
+        assert_eq!(flipslice_twist_depth3[136], 2824101892);
+        assert_eq!(flipslice_twist_depth3[271], 291852549);
+        assert_eq!(flipslice_twist_depth3[8806], 341067092);
+        assert_eq!(flipslice_twist_depth3[880677], 136971537);
+        assert_eq!(flipslice_twist_depth3[8806775], 4294517857);
+    }
 
-    // #[test]
-    // fn test_corners_ud_edges_depth3() {
-    //     let mut pruningtable = PrunningTables::default();
-    //     pruningtable.create_phase2_prun_table();
+    #[test]
+    fn test_corners_ud_edges_depth3() {
+        let sy = SymmetriesTables::new();
+        let mv = MoveTables::new();
+        let mut pruningtable = PrunningTables::default();
+        pruningtable.create_phase2_prun_table(&sy, &mv);
 
-    //     let corners_ud_edges_depth3 = pruningtable.corners_ud_edges_depth3;
-    //     assert_eq!(corners_ud_edges_depth3.len(), 6975360);
-    //     assert_eq!(corners_ud_edges_depth3[0], 1040187196);
-    //     assert_eq!(corners_ud_edges_depth3[88], 3480960252);
-    //     assert_eq!(corners_ud_edges_depth3[135], 4286013407);
-    //     assert_eq!(corners_ud_edges_depth3[136], 4294834141);
-    //     assert_eq!(corners_ud_edges_depth3[8806], 4294967295);
-    //     assert_eq!(corners_ud_edges_depth3[880677], 4292870143);
-    //     assert_eq!(corners_ud_edges_depth3[6975359], 2147483647);
-    //     // println!(
-    //     //     "{} {} {} {}",
-    //     //     flipslice_twist_depth3[13600],
-    //     //     flipslice_twist_depth3[13601],
-    //     //     flipslice_twist_depth3[13602],
-    //     //     flipslice_twist_depth3[136]
-    //     // );
-    // }
+        let corners_ud_edges_depth3 = pruningtable.corners_ud_edges_depth3;
+        assert_eq!(corners_ud_edges_depth3.len(), 6975360);
+        assert_eq!(corners_ud_edges_depth3[0], 1040187196);
+        assert_eq!(corners_ud_edges_depth3[88], 3480960252);
+        assert_eq!(corners_ud_edges_depth3[135], 4286013407);
+        assert_eq!(corners_ud_edges_depth3[136], 4294834141);
+        assert_eq!(corners_ud_edges_depth3[8806], 4294967295);
+        assert_eq!(corners_ud_edges_depth3[880677], 4292870143);
+        assert_eq!(corners_ud_edges_depth3[6975359], 2147483647);
+    }
 
-    // #[test]
-    // fn test_cornslice_depth() {
-    //     let mut pruningtable = PrunningTables::default();
-    //     pruningtable.create_phase2_cornsliceprun_table();
+    #[test]
+    fn test_cornslice_depth() {
+        let mv = MoveTables::new();
+        let mut pruningtable = PrunningTables::default();
+        pruningtable.create_phase2_cornsliceprun_table(&mv);
 
-    //     let cornslice_depth = pruningtable.cornslice_depth;
-    //     assert_eq!(cornslice_depth.len(), 967680);
-    //     assert_eq!(cornslice_depth[0], 0);
-    //     assert_eq!(cornslice_depth[8], 8);
-    //     assert_eq!(cornslice_depth[88], 12);
-    //     assert_eq!(cornslice_depth[136], 11);
-    //     assert_eq!(cornslice_depth[9676], 12);
-    //     assert_eq!(cornslice_depth[96767], 12);
-    //     assert_eq!(cornslice_depth[967679], 7);
-    //     // println!(
-    //     //     "{} {} {} {}",
-    //     //     flipslice_twist_depth3[13600],
-    //     //     flipslice_twist_depth3[13601],
-    //     //     flipslice_twist_depth3[13602],
-    //     //     flipslice_twist_depth3[136]
-    //     // );
-    // }
+        let cornslice_depth = pruningtable.cornslice_depth;
+        assert_eq!(cornslice_depth.len(), 967680);
+        assert_eq!(cornslice_depth[0], 0);
+        assert_eq!(cornslice_depth[8], 8);
+        assert_eq!(cornslice_depth[88], 12);
+        assert_eq!(cornslice_depth[136], 11);
+        assert_eq!(cornslice_depth[9676], 12);
+        assert_eq!(cornslice_depth[96767], 12);
+        assert_eq!(cornslice_depth[967679], 7);
+    }
 }

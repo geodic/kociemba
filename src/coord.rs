@@ -79,7 +79,7 @@ impl CoordCube {
         let u_edges = cc.get_u_edges();
         let d_edges = cc.get_d_edges();
         let corners = cc.get_corners();
-        let mut ud_edges = 0;
+        let ud_edges;
 
         let flipslice_classidx =
             sy.flipslice_classidx[N_FLIP * (slice_sorted as usize / N_PERM_4) + flip as usize];
@@ -244,7 +244,7 @@ fn create_phase2_edgemerge_table() -> Result<Vec<u16>, Error> {
         write_table(fname, &u_edges_plus_d_edges_to_ud_edges)?;
         println!();
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         u_edges_plus_d_edges_to_ud_edges = decode_table(&phase2_edgemerge_table)?;
     }
     Ok(u_edges_plus_d_edges_to_ud_edges)
@@ -252,62 +252,60 @@ fn create_phase2_edgemerge_table() -> Result<Vec<u16>, Error> {
 
 #[cfg(test)]
 mod test {
-    // use test::Bencher;
     use crate::coord::*;
     use crate::facelet::FaceCube;
     use crate::moves::Move;
-    /*
+    
     #[test]
     fn test_coordcube() {
+        let sy = SymmetriesTables::new();
         let fc =
             FaceCube::try_from("RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF").unwrap();
         let cc = CubieCube::try_from(&fc).unwrap();
-        let mut ccd = CoordCube::try_from(&cc).unwrap();
-        assert_eq!(ccd.twist, 149);
-        assert_eq!(ccd.flip, 1514);
-        assert_eq!(ccd.slice_sorted, 1701);
-        assert_eq!(ccd.u_edges, 407);
-        assert_eq!(ccd.d_edges, 9068);
-        assert_eq!(ccd.ud_edges, 65535);
-        assert_eq!(ccd.corners, 3935);
-        assert_eq!(ccd.flipslice_classidx, 1940);
-        assert_eq!(ccd.flipslice_sym, 9);
-        assert_eq!(ccd.flipslice_rep, 3802);
-        assert_eq!(ccd.corner_classidx, 716);
-        assert_eq!(ccd.corner_sym, 7);
-        assert_eq!(ccd.corner_rep, 1260);
-        ccd.phase1_move(Move::U2);
-        assert_eq!(ccd.twist, 1229);
-        assert_eq!(ccd.flip, 1898);
-        assert_eq!(ccd.slice_sorted, 5061);
-        assert_eq!(ccd.u_edges, 71);
-        assert_eq!(ccd.d_edges, 9064);
-        assert_eq!(ccd.ud_edges, 65535);
-        assert_eq!(ccd.corners, 3876);
-        assert_eq!(ccd.flipslice_classidx, 3220);
-        assert_eq!(ccd.flipslice_sym, 13);
-        assert_eq!(ccd.flipslice_rep, 7130);
-        assert_eq!(ccd.corner_classidx, 1321);
-        assert_eq!(ccd.corner_sym, 7);
-        assert_eq!(ccd.corner_rep, 2459);
-        // assert_eq!(ccd.get_depth_phase1(), 9); // ERROR
-        ccd.phase2_move(Move::R2);
-        assert_eq!(ccd.twist, 1229);
-        assert_eq!(ccd.flip, 1898);
-        assert_eq!(ccd.slice_sorted, 5116);
-        assert_eq!(ccd.u_edges, 71);
-        assert_eq!(ccd.d_edges, 9064);
-        assert_eq!(ccd.ud_edges, 37019);
-        assert_eq!(ccd.corners, 7596);
-        assert_eq!(ccd.flipslice_classidx, 3220);
-        assert_eq!(ccd.flipslice_sym, 13);
-        assert_eq!(ccd.flipslice_rep, 7130);
-        assert_eq!(ccd.corner_classidx, 1321);
-        assert_eq!(ccd.corner_sym, 7);
-        assert_eq!(ccd.corner_rep, 2459);
-        // assert_eq!(solver::SolverThread::get_depth_phase2(3, 5), 11);
+        let mut cdc = CoordCube::from_cubie(&cc, &sy).unwrap();
+        assert_eq!(cdc.twist, 149);
+        assert_eq!(cdc.flip, 1514);
+        assert_eq!(cdc.slice_sorted, 1701);
+        assert_eq!(cdc.u_edges, 407);
+        assert_eq!(cdc.d_edges, 9068);
+        assert_eq!(cdc.ud_edges, 65535);
+        assert_eq!(cdc.corners, 3935);
+        assert_eq!(cdc.flipslice_classidx, 1940);
+        assert_eq!(cdc.flipslice_sym, 9);
+        assert_eq!(cdc.flipslice_rep, 3802);
+        assert_eq!(cdc.corner_classidx, 716);
+        assert_eq!(cdc.corner_sym, 7);
+        assert_eq!(cdc.corner_rep, 1260);
+        cdc.phase1_move(Move::U2);
+        assert_eq!(cdc.twist, 1229);
+        assert_eq!(cdc.flip, 1898);
+        assert_eq!(cdc.slice_sorted, 5061);
+        assert_eq!(cdc.u_edges, 71);
+        assert_eq!(cdc.d_edges, 9064);
+        assert_eq!(cdc.ud_edges, 65535);
+        assert_eq!(cdc.corners, 3876);
+        assert_eq!(cdc.flipslice_classidx, 3220);
+        assert_eq!(cdc.flipslice_sym, 13);
+        assert_eq!(cdc.flipslice_rep, 7130);
+        assert_eq!(cdc.corner_classidx, 1321);
+        assert_eq!(cdc.corner_sym, 7);
+        assert_eq!(cdc.corner_rep, 2459);
+        cdc.phase2_move(Move::R2);
+        assert_eq!(cdc.twist, 1229);
+        assert_eq!(cdc.flip, 1898);
+        assert_eq!(cdc.slice_sorted, 5116);
+        assert_eq!(cdc.u_edges, 71);
+        assert_eq!(cdc.d_edges, 9064);
+        assert_eq!(cdc.ud_edges, 37019);
+        assert_eq!(cdc.corners, 7596);
+        assert_eq!(cdc.flipslice_classidx, 3220);
+        assert_eq!(cdc.flipslice_sym, 13);
+        assert_eq!(cdc.flipslice_rep, 7130);
+        assert_eq!(cdc.corner_classidx, 1321);
+        assert_eq!(cdc.corner_sym, 7);
+        assert_eq!(cdc.corner_rep, 2459);
     }
-    */
+    
     #[test]
     fn test_create_phase2_edgemerge_table() {
         let ud_edges = create_phase2_edgemerge_table().unwrap();

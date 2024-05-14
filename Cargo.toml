@@ -2,11 +2,11 @@
 name = "kociemba"
 version = "0.5.0"
 edition = "2021"
-description = "A crate for manipulating and solving a 3x3 Rubik's cube with Kociemba's two phase algorithm"
+description = "crate for solving the 3x3 crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm"
 authors = [
   "Adun Gaos <adungaos@gmail.com>",
 ]
-keywords = ["rubiks-cube", "cube-solver", "kociemba", "two-phase"]
+keywords = ["rubiks-cube", "cube-solver", "kociemba", "two-phase", "kewb"]
 categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"

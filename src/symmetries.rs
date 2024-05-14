@@ -235,7 +235,7 @@ fn conj_twist() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &twist_conj)?;
     } else {
-        println!("Loading {} table...", &fname);
+        // println!("Loading {} table...", &fname);
         twist_conj = decode_table(&conj_table)?;
     }
     Ok(twist_conj)
@@ -274,7 +274,7 @@ fn conj_ud_edges() -> Result<Vec<u16>, Error> {
         println!();
         write_table(fname, &ud_edges_conj)?;
     } else {
-        println!("loading {} table...", &fname);
+        // println!("Loading {} table...", &fname);
         ud_edges_conj = decode_table(&conj_table)?;
     }
     Ok(ud_edges_conj)
@@ -348,7 +348,7 @@ pub fn flipslice_syms() -> Result<FlipSliceSyms, Error> {
         write_table(fname2, &flipslice_sym)?;
         write_table(fname3, &flipslice_rep)?;
     } else {
-        println!("Loading flipslice sym-tables...");
+        // println!("Loading flipslice sym-tables...");
         flipslice_classidx = decode_table(&classidx_table)?;
         flipslice_sym = decode_table(&sym_table)?;
         flipslice_rep = decode_table(&rep_table)?;
@@ -422,7 +422,7 @@ pub fn corner_syms() -> Result<CornerSyms, Error> {
         write_table(fname2, &corner_sym)?;
         write_table(fname3, &corner_rep)?;
     } else {
-        println!("Loading corner sym-tables...");
+        // println!("Loading corner sym-tables...");
         corner_classidx = decode_table(&classidx_table)?;
         corner_sym = decode_table(&sym_table)?;
         corner_rep = decode_table(&rep_table)?;

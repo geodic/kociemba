@@ -216,7 +216,7 @@ pub fn move_twist() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &twist_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         twist_move = decode_table(&move_twist_table)?;
     }
     Ok(twist_move)
@@ -247,7 +247,7 @@ pub fn move_flip() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &flip_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         flip_move = decode_table(&flip_move_table)?;
     }
     Ok(flip_move)
@@ -284,7 +284,7 @@ pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &slice_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         slice_move = decode_table(&slice_move_table)?;
     }
     Ok(slice_move)
@@ -319,7 +319,7 @@ pub fn move_u_edges() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &u_edges_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         u_edges_move = decode_table(&move_u_edges_table)?;
     }
     Ok(u_edges_move)
@@ -354,7 +354,7 @@ pub fn move_d_edges() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &d_edges_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         d_edges_move = decode_table(&move_d_edges_table)?;
     }
     Ok(d_edges_move)
@@ -397,7 +397,7 @@ pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &ud_edges_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         ud_edges_move = decode_table(&move_ud_edges_table)?;
     }
     Ok(ud_edges_move)
@@ -434,7 +434,7 @@ pub fn move_corners() -> Result<Vec<u16>, Error> {
         }
         write_table(fname, &corners_move)?;
     } else {
-        println!("Loading {} table...", fname);
+        // println!("Loading {} table...", fname);
         corners_move = decode_table(&move_corners_table)?;
     }
     Ok(corners_move)

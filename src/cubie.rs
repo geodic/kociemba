@@ -618,7 +618,7 @@ impl CubieCube {
         let mut x = 0;
         let mut edge4 = [UR; 4];
         let mut ep_mod = self.ep.clone();
-        for j in 0..4 {
+        for _j in 0..4 {
             rotate_right(&mut ep_mod, 0, 11);
         }
         // First compute the index a < (12 choose 4) and the permutation array perm.
@@ -680,7 +680,7 @@ impl CubieCube {
                 x += 1;
             }
         }
-        for j in 0..4 {
+        for _j in 0..4 {
             rotate_left(&mut self.ep, 0, 11);
         }
     }
@@ -693,7 +693,7 @@ impl CubieCube {
         let mut x = 0;
         let mut edge4 = [UR; 4];
         let mut ep_mod = self.ep.clone();
-        for j in 0..4 {
+        for _j in 0..4 {
             rotate_right(&mut ep_mod, 0, 11);
         }
         // First compute the index a < (12 choose 4) and the permutation array perm.
