@@ -1,7 +1,5 @@
 use std::cmp::{max, min};
 use std::collections::HashSet;
-use std::os::windows::io::HandleOrInvalid;
-use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -17,6 +15,11 @@ use crate::pruning::PrunningTables;
 use crate::symmetries::SymmetriesTables;
 use crate::{pruning, symmetries};
 
+/// All data tables.
+/// * `sy`: [SymmetriesTables]
+/// * `mv`: [MoveTables]
+/// * `pr`: [PrunningTables]
+/// * `em`: [EdgeMergeTables]
 pub struct SolverTables {
     sy: SymmetriesTables,
     mv: MoveTables,
@@ -42,118 +45,193 @@ impl SolverTables {
     }
 }
 
+/// Solution result:
+/// * solution: a Move vector.
+/// * solve_time: time to get solution(not include load data tables time.).
+#[derive (Debug)]
+pub struct SoutionResult {
+    pub solution: Vec<Move>,
+    pub solve_time: Duration,
+}
+
+impl Default for SoutionResult {
+    fn default() -> Self {
+        Self {
+            solution: Vec::new(),
+            solve_time: Duration::from_secs(0),
+        }
+    }
+}
+
+/// Solve a cube defined by cubstring to a position defined by goalstring.
+/// # Parameters
+/// * `cubestring`: The format of the string is given in the Facelet class defined.
+/// * `goalstring`: The format of the string is given in the Facelet class defined.
+/// * `max_length`: The function will return if a maneuver of length <= max_length has been found
+/// * `time_out`: If the function times out, the best solution found so far is returned. If there has not been found
+/// any solution yet the computation continues until a first solution appears.
+///
+/// # Examples
+/// ```rust
+/// use kociemba::solver::solver;
+///
+/// fn main() {
+///     let result = solver(
+///         "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
+///         "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+///         20,
+///         3.0,
+///         ).unwrap();
+///     println!("{:?}, ({}), ({:?})", result.solution, result.solution.len(), result.solve_time);
+/// }
+/// ```
+
+pub fn solver(
+    cubestring: &str,
+    goalstring: &str,
+    max_length: usize,
+    time_out: f32,
+) -> Result<SoutionResult, Error> {
+    lazy_static! {
+        static ref SOLVERTABLES: SolverTables = SolverTables::new();
+    }
+    for i in 0..2 {
+        let facestr;
+        let maxlength;
+        let timeout;
+        let mut cc;
+        if i == 0 {
+            facestr = "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF";
+            maxlength = 25;
+            timeout = 3.;
+            let fc = FaceCube::try_from(facestr).unwrap();
+            cc = CubieCube::try_from(&fc).unwrap();
+        } else {
+            facestr = &cubestring;
+            maxlength = max_length;
+            timeout = time_out;
+            let fc0 = FaceCube::try_from(facestr).unwrap();
+            let fcg = FaceCube::try_from(goalstring).unwrap();
+            let cc0 = CubieCube::try_from(&fc0).unwrap();
+            let s = cc0.verify().unwrap();
+            if s != true {
+                return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
+            }
+            let ccg = CubieCube::try_from(&fcg).unwrap();
+            let s = ccg.verify().unwrap();
+            if s != true {
+                return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
+            }
+            // cc0 * S = ccg  <=> (ccg^-1 * cc0) * S = Id
+            cc = ccg.inverse_cubie_cube();
+            cc.multiply(cc0);
+        }
+    
+        let start_time = Instant::now();
+        let syms = cc.symmetries();
+        let v: HashSet<usize> = HashSet::from([16, 20, 24, 28]);
+        let symsset: HashSet<usize> = HashSet::from_iter(syms.into_iter());
+        let ins: Vec<&usize> = v.intersection(&symsset).collect();
+        let mut tr = match ins.len() > 0 {
+            // we have some rotational symmetry along a long diagonal
+            true => vec![0, 3], // so we search only one direction and the inverse
+            false => (0..6).collect(), // This means search in 3 directions + inverse cube
+        };
+        let vv: HashSet<usize> = HashSet::from_iter(48..96);
+        let ins: Vec<&usize> = vv.intersection(&symsset).collect();
+        if ins.len() > 0 {
+            // we have some antisymmetry so we do not search the inverses
+            tr = tr.into_iter().filter(|x| *x < 3).collect()
+        }
+        let mut solverthreads = vec![];
+
+        // these mutable variables are modidified by all six threads
+        let solutions = Arc::new(Mutex::new(vec![Vec::<Move>::new()]));
+        let terminated = Arc::new(Mutex::new(false));
+
+        for i in tr {
+            let solutions = Arc::clone(&solutions);
+            let terminated = Arc::clone(&terminated);
+
+            let mut sth = SolverThread::new(
+                cc,
+                i % 3,
+                i / 3,
+                maxlength,
+                timeout,
+                start_time,
+                solutions,
+                terminated,
+                vec![999],
+                &SOLVERTABLES,
+            );
+
+            let handle = thread::spawn(move || {
+                sth.run();
+            });
+            solverthreads.push(handle);
+        }
+        for handle in solverthreads {
+            handle.join().unwrap();
+        }
+
+        if i == 1 {
+            let solutions = solutions.lock().unwrap();
+            if (*solutions).len() > 1 {
+                let end_time = Instant::now();
+                let ls = (*solutions).last().unwrap();
+                // println!("{:?} ({}), {:?}", *ls, (*ls).len(), end_time - start_time)
+                return Ok(SoutionResult {
+                    solution: ls.to_vec(),
+                    solve_time: end_time - start_time,
+                });
+            }
+        }
+    }
+    Ok(SoutionResult::default())
+}
+
 /// Solve a cube defined by its cube definition string.
 /// # Parameters
-///    `cubestring`: The format of the string is given in the Facelet class defined.
-///
-///    `max_length`: The function will return if a maneuver of length <= max_length has been found
-///
-///    `timeout`: If the function times out, the best solution found so far is returned. If there has not been found
+/// * `cubestring`: The format of the string is given in the Facelet class defined.
+/// * `max_length`: The function will return if a maneuver of length <= max_length has been found
+/// * `time_out`: If the function times out, the best solution found so far is returned. If there has not been found
 ///     any solution yet the computation continues until a first solution appears.
 /// # Examples
 /// ```rust
 /// use kociemba::solver::solve;
-/// 
+///
 /// fn main() {
-///     let _ = solve(
-///     "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
-///     20,
-///     3.0,);
+///     let result = solve(
+///         "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
+///         20,
+///         3.0,).unwrap();
+///     println!("{:?}, ({}), ({:?})", result.solution, result.solution.len(), result.solve_time);
 /// }
 /// ```
 
-
-pub fn solve(cubestring: &str, max_length: usize, timeout: f64) -> Result<bool, Error> {
-    let fc = FaceCube::try_from(cubestring).unwrap();
-    let cc = CubieCube::try_from(&fc).unwrap();
-    let s = cc.verify().unwrap();
-    if s != true {
-        return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
-    }
-    lazy_static! {
-        static ref SOLVERTABLES: SolverTables = SolverTables::new();
-    }
-
-    let start_time = Instant::now();
-    let syms = cc.symmetries();
-    let v: HashSet<usize> = HashSet::from([16, 20, 24, 28]);
-    let symsset: HashSet<usize> = HashSet::from_iter(syms.into_iter());
-    let ins: Vec<&usize> = v.intersection(&symsset).collect();
-    let mut tr = match ins.len() > 0 {
-        // we have some rotational symmetry along a long diagonal
-        true => vec![0, 3], // so we search only one direction and the inverse
-        false => (0..6).collect(), // This means search in 3 directions + inverse cube
-    };
-    let vv: HashSet<usize> = HashSet::from_iter(48..96);
-    let ins: Vec<&usize> = vv.intersection(&symsset).collect();
-    if ins.len() > 0 {
-        // we have some antisymmetry so we do not search the inverses
-        tr = tr.into_iter().filter(|x| *x < 3).collect()
-    }
-    let mut solverthreads = vec![];
-
-    // these mutable variables are modidified by all six threads
-    let solutions = Arc::new(Mutex::new(vec![Vec::<Move>::new()]));
-    let terminated = Arc::new(Mutex::new(false));
-
-    for i in tr {
-        let solutions = Arc::clone(&solutions);
-        let terminated = Arc::clone(&terminated);
-
-        let mut sth = SolverThread::new(
-            cc,
-            i % 3,
-            i / 3,
-            max_length,
-            timeout,
-            start_time,
-            solutions,
-            terminated,
-            vec![999],
-            &SOLVERTABLES,
-        );
-
-        let handle = thread::spawn(move || {
-            sth.run();
-        });
-        solverthreads.push(handle);
-    }
-    for handle in solverthreads {
-        handle.join().unwrap();
-    }
-
-    let solutions = solutions.lock().unwrap();
-    if (*solutions).len() > 1 {
-        let end_time = Instant::now();
-        let ls = (*solutions).last().unwrap();
-        println!("{:?} ({}), {:?}", *ls, (*ls).len(), end_time - start_time)
-    }
-    Ok(true)
+pub fn solve(cubestring: &str, max_length: usize, timeout: f32) -> Result<SoutionResult, Error> {
+    let goalstring = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
+    solver(cubestring, goalstring, max_length, timeout)
 }
+
 
 /** The SolverThread class solves implements the two phase algorithm.
 
-cb_cube: The cube to be solved in CubieCube representation
-
-rot: Rotates the  cube 120° * rot along the long diagonal before applying the two-phase-algorithm
-
-inv: 0: Do not invert the cube . 1: Invert the cube before applying the two-phase-algorithm
-
-ret_length: If a solution with length <= ret_length is found the search stops.
+* `cb_cube`: The cube to be solved in CubieCube representation
+* `rot`: Rotates the  cube 120° * rot along the long diagonal before applying the two-phase-algorithm
+* `inv`: 0: Do not invert the cube . 1: Invert the cube before applying the two-phase-algorithm
+* `ret_length`: If a solution with length <= ret_length is found the search stops.
  The most efficient way to solve a cube is to start six threads in parallel with rot = 0, 1 and 2 and
  inv = 0, 1. The first thread which finds a solutions sets the terminated flag which signals all other threads
  to teminate. On average this solves a cube about 12 times faster than solving one cube with a single thread.
-
-timeout: Essentially the maximal search time in seconds. Essentially because the search does not return
+* `timeout`: Essentially the maximal search time in seconds. Essentially because the search does not return
  before at least one solution has been found.
-
-start_time: The time the search started.
-
-solutions: An array with the found solutions found by the six parallel threads
-
-terminated: An event shared by the six threads to signal a termination request
-
-shortest_length: The length of the shortest solutions in the solution array
+* `start_time`: The time the search started.
+* `solutions`: An array with the found solutions found by the six parallel threads
+* `terminated`: An event shared by the six threads to signal a termination request
+* `shortest_length`: The length of the shortest solutions in the solution array
+* `solvertables`: The reference to [SolverTables].
 */
 pub struct SolverThread<'a> {
     cb_cube: CubieCube,
@@ -164,7 +242,7 @@ pub struct SolverThread<'a> {
     sofar_phase2: Vec<Move>,
     phase2_done: bool,
     ret_length: usize,
-    timeout: f64,
+    timeout: f32,
     start_time: Instant,
     cornersave: u16,
     // these variables are shared by the six threads, initialized in function solve
@@ -180,7 +258,7 @@ impl<'a> SolverThread<'a> {
         rot: u8,
         inv: u8,
         ret_length: usize,
-        timeout: f64,
+        timeout: f32,
         start_time: Instant,
         solutions: Arc<Mutex<Vec<Vec<Move>>>>,
         terminated: Arc<Mutex<bool>>,
@@ -208,7 +286,7 @@ impl<'a> SolverThread<'a> {
     }
 
     /// Compute the distance to the cube subgroup H where flip=slice=twist=0
-    /// 
+    ///
     /// :return: The distance to H
     fn get_depth_phase1(&self) -> u32 {
         let mut slice_ = self.co_cube.slice_sorted / N_PERM_4 as u16;
@@ -467,7 +545,7 @@ impl<'a> SolverThread<'a> {
             // phase 1 solved
             {
                 let solutions = self.solutions.lock().unwrap();
-                if self.start_time.elapsed() > Duration::from_secs_f64(self.timeout)
+                if self.start_time.elapsed() > Duration::from_secs_f32(self.timeout)
                     && (*solutions).len() > 1
                 {
                     let mut terminated = self.terminated.lock().unwrap();
@@ -654,14 +732,35 @@ impl<'a> SolverThread<'a> {
 
 #[cfg(test)]
 mod test {
+    use std::result;
+
+    use crate::moves::Move::*;
     use crate::solver::*;
 
     #[test]
     fn test_solve() {
-        let _ = solve(
+        let result = solve(
             "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
-            19,
-            3.,
+            20,
+            3.0,
+        )
+        .unwrap();
+        assert_eq!(result.solution.len(), 17);
+        assert_eq!(
+            result.solution,
+            vec![R, D2, B2, R2, L2, B3, U, F3, D2, R, B2, R2, F2, B2, R2, D2, B]
         );
+        // println!("{:?}, ({})", solution, solution.len());
+    }
+
+    #[test]
+    fn test_solver() {
+        let result = solver(
+            "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF",
+            "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
+            20,
+            3.0,
+        ).unwrap();
+        println!("{:?}, ({}), ({:?})", result.solution, result.solution.len(), result.solve_time);
     }
 }

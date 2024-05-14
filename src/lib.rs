@@ -1,5 +1,5 @@
 //! # kociemba
-//! `kociemba`: crate for manipulating and solving the 3x3 Rubik's cube with [Kociemba's two phase algorithm](http://kociemba.org/cube.htm).
+//! `kociemba`: crate for solving the 3x3 Rubik's cube with [Kociemba's two phase algorithm](http://kociemba.org/cube.htm).
 
 #[macro_use]
 extern crate lazy_static;

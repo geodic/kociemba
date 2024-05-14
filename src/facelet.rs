@@ -34,7 +34,7 @@ impl TryFrom<char> for Color {
 /// 
 /// The facelet representation follows the ordering: U-R-F-D-L-B.
 /// 
-/// A solved facelet is UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB.
+/// A solved facelet is `UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB`.
 /// 
 #[derive(Debug, PartialEq)]
 pub struct FaceCube {

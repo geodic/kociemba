@@ -44,6 +44,7 @@ const CC_MIRR_LR2: CubieCube = CubieCube {
     eo: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 };
 
+/// Tables to store symmetries.
 #[derive(Debug, Clone)]
 pub struct SymmetriesTables {
     pub bsc: [CubieCube; 4],
@@ -279,13 +280,14 @@ fn conj_ud_edges() -> Result<Vec<u16>, Error> {
     Ok(ud_edges_conj)
 }
 
+/// The tables to handle the symmetry reduced flip-slice coordinate in phase 1.
 pub struct FlipSliceSyms {
     pub classidx: Vec<u16>,
     pub sym: Vec<u8>,
     pub rep: Vec<u32>,
 }
 
-/// Generate the tables to handle the symmetry reduced flip-slice coordinate in  phase 1.
+/// Generate the tables to handle the symmetry reduced flip-slice coordinate in phase 1.
 pub fn flipslice_syms() -> Result<FlipSliceSyms, Error> {
     let sc = sc();
     let inv_idx = inv_idx();
@@ -358,6 +360,8 @@ pub fn flipslice_syms() -> Result<FlipSliceSyms, Error> {
     })
 }
 
+
+/// The tables to handle the symmetry reduced corner permutation coordinate in phase 2.
 pub struct CornerSyms {
     pub classidx: Vec<u16>,
     pub sym: Vec<u8>,
