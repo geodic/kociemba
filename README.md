@@ -17,7 +17,7 @@ Total time: 3.0156508s
 ```
 ```
 PS C:\Projects\kociemba>kociemba.exe
-crate for solving the 3x3 crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm
+crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm
 
 Usage: kociemba.exe [COMMAND]
 
