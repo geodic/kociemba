@@ -16,6 +16,7 @@ use crate::symmetries::SymmetriesTables;
 use crate::{pruning, symmetries};
 
 /// All data tables.
+/// 
 /// * `sy`: [SymmetriesTables]
 /// * `mv`: [MoveTables]
 /// * `pr`: [PrunningTables]
@@ -64,6 +65,7 @@ impl Default for SoutionResult {
 }
 
 /// Solve a cube defined by cubstring to a position defined by goalstring.
+/// 
 /// # Parameters
 /// * `cubestring`: The format of the string is given in the Facelet class defined.
 /// * `goalstring`: The format of the string is given in the Facelet class defined.
@@ -104,21 +106,21 @@ pub fn solver(
             facestr = "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF";
             maxlength = 25;
             timeout = 3.;
-            let fc = FaceCube::try_from(facestr).unwrap();
-            cc = CubieCube::try_from(&fc).unwrap();
+            let fc = FaceCube::try_from(facestr)?;
+            cc = CubieCube::try_from(&fc)?;
         } else {
             facestr = &cubestring;
             maxlength = max_length;
             timeout = time_out;
-            let fc0 = FaceCube::try_from(facestr).unwrap();
-            let fcg = FaceCube::try_from(goalstring).unwrap();
-            let cc0 = CubieCube::try_from(&fc0).unwrap();
-            let s = cc0.verify().unwrap();
+            let fc0 = FaceCube::try_from(facestr)?;
+            let fcg = FaceCube::try_from(goalstring)?;
+            let cc0 = CubieCube::try_from(&fc0)?;
+            let s = cc0.verify()?;
             if s != true {
                 return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
             }
-            let ccg = CubieCube::try_from(&fcg).unwrap();
-            let s = ccg.verify().unwrap();
+            let ccg = CubieCube::try_from(&fcg)?;
+            let s = ccg.verify()?;
             if s != true {
                 return Err(Error::InvalidFaceletString); // no valid facelet cube, gives invalid cubie cube
             }
@@ -167,7 +169,7 @@ pub fn solver(
             );
 
             let handle = thread::spawn(move || {
-                sth.run();
+                sth.start();
             });
             solverthreads.push(handle);
         }
@@ -287,7 +289,7 @@ impl<'a> SolverThread<'a> {
 
     /// Compute the distance to the cube subgroup H where flip=slice=twist=0
     ///
-    /// :return: The distance to H
+    /// return: The distance to H
     fn get_depth_phase1(&self) -> u32 {
         let mut slice_ = self.co_cube.slice_sorted / N_PERM_4 as u16;
         let mut flip = self.co_cube.flip;
@@ -336,11 +338,13 @@ impl<'a> SolverThread<'a> {
     Get distance to subgroup where only the UD-slice edges may be permuted in their slice (only 24/2 = 12 possible
     ways due to overall even parity). This is a lower bound for the number of moves to solve phase 2.
 
-    corners: Corners coordinate
+    # Parameters
+    
+    `corners`: Corners coordinate
 
-    ud_edges: Coordinate of the 8 edges of U and D face.
+    `ud_edges`: Coordinate of the 8 edges of U and D face.
 
-    :return:
+    return:
     */
     fn get_depth_phase2(&self, corners: u16, ud_edges: u16) -> u16 {
         let mut corners = corners;
@@ -408,7 +412,6 @@ impl<'a> SolverThread<'a> {
         dist: u16,
         togo_phase2: u16,
     ) -> bool {
-        // println!("Search2, corners {}, ud_edges {}, ss {}, dist {}, togo {}", corners, ud_edges, slice_sorted, dist, togo_phase2);
         {
             let terminated = self.terminated.lock().unwrap();
             if *terminated || self.phase2_done {
@@ -417,13 +420,12 @@ impl<'a> SolverThread<'a> {
             }
         }
         if togo_phase2 == 0 && slice_sorted == 0 {
-            // self.lock.acquire()  // phase 2 solved, store solution
+            // phase 2 solved, store solution
             let mut man = self.sofar_phase1.clone();
             let mut other = self.sofar_phase2.clone();
             man.append(&mut other);
             let mut solutions = self.solutions.lock().unwrap();
             let lslen = (*solutions).last().unwrap().len();
-            // println!("Solutions: {:?}, man: {:?}, lslen: {}", (*solutions).len(), man, lslen);
             if (*solutions).len() == 1 || lslen > man.len() {
                 if self.inv == 1 {
                     // we solved the inverse cube
@@ -444,7 +446,6 @@ impl<'a> SolverThread<'a> {
                 }
                 man = newman;
                 self.shortest_length[0] = man.len();
-                // let mut solutions = self.solutions.lock().unwrap();
                 (*solutions).push(man);
             }
 
@@ -533,11 +534,11 @@ impl<'a> SolverThread<'a> {
         slice_sorted: u16,
         dist: u16,
         togo_phase1: u16,
-    ) -> Result<bool, Error> {
+    ) -> bool {
         {
             let terminated = self.terminated.lock().unwrap();
             if *terminated {
-                return Ok(true);
+                return true;
             }
         }
 
@@ -582,7 +583,7 @@ impl<'a> SolverThread<'a> {
                 >= togo2_limit
             {
                 // precheck speeds up the computation
-                return Ok(false);
+                return false;
             }
 
             let mut u_edges = self.co_cube.u_edges;
@@ -666,16 +667,15 @@ impl<'a> SolverThread<'a> {
                     slice_sorted_new,
                     dist_new,
                     togo_phase1 - 1,
-                )
-                .unwrap();
+                );
                 self.sofar_phase1.pop();
             }
         }
-        Ok(false)
+        true
     }
 
-    /// Start solverthreads to find solutions.
-    pub fn run(&mut self) {
+    /// Start solverthread to find solution.
+    pub fn start(&mut self) {
         let mut cb = CubieCube::default();
         let sc = &self.solvertables.sy.sc;
         if self.rot == 0 {
@@ -711,7 +711,7 @@ impl<'a> SolverThread<'a> {
             // invert cube
             cb = cb.inverse_cubie_cube();
         }
-        // self.co_cube = CoordCube::try_from(&cb).unwrap(); // the rotated/inverted cube in coordinate representation
+        // self.co_cube = CoordCube::try_from(&cb)?; // the rotated/inverted cube in coordinate representation
         self.co_cube = CoordCube::from_cubie(&cb, &self.solvertables.sy).unwrap(); // the rotated/inverted cube in coordinate representation
         let dist = self.get_depth_phase1() as u16;
         for togo1 in dist..20 {
@@ -724,8 +724,7 @@ impl<'a> SolverThread<'a> {
                     self.co_cube.slice_sorted,
                     dist,
                     togo1,
-                )
-                .unwrap();
+                );
         }
     }
 }

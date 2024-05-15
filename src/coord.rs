@@ -71,7 +71,6 @@ impl CoordCube {
         if !cc.is_solvable() {
             return Err(Error::InvalidCubieValue);
         }
-        // let cornersyms = symmetries::corner_syms().unwrap();
 
         let twist = cc.get_twist();
         let flip = cc.get_flip();
@@ -116,18 +115,18 @@ impl CoordCube {
     /// Update phase 1 coordinates when move is apply.
     /// 
     /// :param m: The move
-    pub fn phase1_move(&mut self, m: moves::Move) {
-        let twist_move = moves::move_twist().unwrap();
-        let flip_move = moves::move_flip().unwrap();
-        let slice_sorted_move = moves::move_slice_sorted().unwrap();
-        let u_edges_move = moves::move_u_edges().unwrap();
-        let d_edges_move = moves::move_d_edges().unwrap();
-        let corners_move = moves::move_corners().unwrap();
-        let flipslicesyms = symmetries::flipslice_syms().unwrap();
+    pub fn phase1_move(&mut self, m: moves::Move) -> Result<(), Error> {
+        let twist_move = moves::move_twist()?;
+        let flip_move = moves::move_flip()?;
+        let slice_sorted_move = moves::move_slice_sorted()?;
+        let u_edges_move = moves::move_u_edges()?;
+        let d_edges_move = moves::move_d_edges()?;
+        let corners_move = moves::move_corners()?;
+        let flipslicesyms = symmetries::flipslice_syms()?;
         let flipslice_classidx = flipslicesyms.classidx;
         let flipslice_sym = flipslicesyms.sym;
         let flipslice_rep = flipslicesyms.rep;
-        let cornersyms = symmetries::corner_syms().unwrap();
+        let cornersyms = symmetries::corner_syms()?;
         let corner_classidx = cornersyms.classidx;
         let corner_sym = cornersyms.sym;
         let corner_rep = cornersyms.rep;
@@ -147,15 +146,16 @@ impl CoordCube {
         self.corner_classidx = corner_classidx[self.corners as usize];
         self.corner_sym = corner_sym[self.corners as usize];
         self.corner_rep = corner_rep[self.corner_classidx as usize];
+        Ok(())
     }
 
     /// Update phase 2 coordinates when move is apply.
     /// 
     /// :param m: The move
-    pub fn phase2_move(&mut self, m: moves::Move) {
-        let slice_sorted_move = moves::move_slice_sorted().unwrap();
-        let corners_move = moves::move_corners().unwrap();
-        let ud_edges_move = moves::move_ud_edges().unwrap();
+    pub fn phase2_move(&mut self, m: moves::Move) -> Result<(), Error>{
+        let slice_sorted_move = moves::move_slice_sorted()?;
+        let corners_move = moves::move_corners()?;
+        let ud_edges_move = moves::move_ud_edges()?;
 
         self.slice_sorted = slice_sorted_move[N_MOVE * self.slice_sorted as usize + m as usize];
         self.corners = corners_move[N_MOVE * self.corners as usize + m as usize];
@@ -164,6 +164,7 @@ impl CoordCube {
             65535 => ud_edges_move[N_UD_EDGES * N_MOVE + m as usize - N_MOVE],
             _ => ud_edges_move[N_MOVE * self.ud_edges as usize + m as usize],
         };
+        Ok(())
     }
 
 }
@@ -276,7 +277,7 @@ mod test {
         assert_eq!(cdc.corner_classidx, 716);
         assert_eq!(cdc.corner_sym, 7);
         assert_eq!(cdc.corner_rep, 1260);
-        cdc.phase1_move(Move::U2);
+        let _ = cdc.phase1_move(Move::U2);
         assert_eq!(cdc.twist, 1229);
         assert_eq!(cdc.flip, 1898);
         assert_eq!(cdc.slice_sorted, 5061);
@@ -290,7 +291,7 @@ mod test {
         assert_eq!(cdc.corner_classidx, 1321);
         assert_eq!(cdc.corner_sym, 7);
         assert_eq!(cdc.corner_rep, 2459);
-        cdc.phase2_move(Move::R2);
+        let _ = cdc.phase2_move(Move::R2);
         assert_eq!(cdc.twist, 1229);
         assert_eq!(cdc.flip, 1898);
         assert_eq!(cdc.slice_sorted, 5116);

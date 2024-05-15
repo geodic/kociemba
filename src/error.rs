@@ -25,6 +25,4 @@ pub enum Error {
     DecodeError(#[from] DecodeError),
     #[error("{0}")]
     EncodeError(#[from] EncodeError),
-    #[error("Timeout")]
-    Timeout,
 }

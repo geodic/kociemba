@@ -230,6 +230,7 @@ pub fn move_twist() -> Result<Vec<u16>, Error> {
 pub fn move_flip() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_flip";
     let flip_move_table = std::fs::read(&fname).unwrap_or("".into());
     let mut flip_move = vec![0; N_FLIP * N_MOVE];
@@ -264,6 +265,7 @@ pub fn move_flip() -> Result<Vec<u16>, Error> {
 pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_slice_sorted";
     let slice_move_table = std::fs::read(&fname).unwrap_or("".into());
     let mut slice_move = vec![0; N_SLICE_SORTED * N_MOVE];
@@ -299,6 +301,7 @@ pub fn move_slice_sorted() -> Result<Vec<u16>, Error> {
 pub fn move_u_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_u_edges";
     let move_u_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut u_edges_move = vec![0; N_SLICE_SORTED * N_MOVE];
@@ -334,6 +337,7 @@ pub fn move_u_edges() -> Result<Vec<u16>, Error> {
 pub fn move_d_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_d_edges";
     let move_d_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut d_edges_move = vec![0; N_SLICE_SORTED * N_MOVE];
@@ -368,6 +372,7 @@ pub fn move_d_edges() -> Result<Vec<u16>, Error> {
 pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_ud_edges";
     let move_ud_edges_table = std::fs::read(&fname).unwrap_or("".into());
     let mut ud_edges_move = vec![0; N_UD_EDGES * N_MOVE];
@@ -411,6 +416,7 @@ pub fn move_ud_edges() -> Result<Vec<u16>, Error> {
 pub fn move_corners() -> Result<Vec<u16>, Error> {
     let mut a = CubieCube::default();
     let bmc = cubie::basic_move_cubes();
+    std::fs::create_dir_all("tables")?;
     let fname = "tables/move_corners";
     let move_corners_table = std::fs::read(&fname).unwrap_or("".into());
     let mut corners_move = vec![0; N_CORNERS * N_MOVE];

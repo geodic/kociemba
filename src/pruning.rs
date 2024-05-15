@@ -2,6 +2,7 @@ use crate::constants::*;
 use crate::cubie::CubieCube;
 use crate::moves::{Move, MoveTables};
 use crate::symmetries::SymmetriesTables;
+use crate::error::Error;
 use crate::{decode_table, write_table};
 
 /// The pruning tables cut the search tree during the search.
@@ -73,8 +74,9 @@ impl PrunningTables {
     }
 
     /// Create/load the flipslice_twist_depth3 pruning table for phase 1.
-    pub fn create_phase1_prun_table(&mut self, sy: &SymmetriesTables, mv: &MoveTables) {
+    pub fn create_phase1_prun_table(&mut self, sy: &SymmetriesTables, mv: &MoveTables) -> Result<(), Error> {
         let total: usize = N_FLIPSLICE_CLASS * N_TWIST;
+        std::fs::create_dir_all("tables")?;
         let fname = "tables/phase1_prun";
         let phase1_prun_table = std::fs::read(&fname).unwrap_or("".into());
 
@@ -200,7 +202,6 @@ impl PrunningTables {
                                             for k in 1..16 {
                                                 sym >>= 1;
                                                 if sym % 2 == 1 {
-                                                    // let twist_conj = symmetries::conj_twist().unwrap();
                                                     let twist2 = twist_conj
                                                         [((twist1 as usize) << 4) + k as usize];
                                                     // fs2_classidx = fs1_classidx due to symmetry
@@ -237,17 +238,19 @@ impl PrunningTables {
                 depth += 1;
                 println!("Depth: {} done: {}/{}", depth, done, total);
             }
-            write_table(fname, &self.flipslice_twist_depth3).unwrap();
+            write_table(fname, &self.flipslice_twist_depth3)?;
         } else {
             // println!("Loading {} table...", fname);
-            self.flipslice_twist_depth3 = decode_table(&phase1_prun_table).unwrap();
+            self.flipslice_twist_depth3 = decode_table(&phase1_prun_table)?;
         }
+        Ok(())
     }
 
     /// Create/load the corners_ud_edges_depth3 pruning table for phase 2.
-    pub fn create_phase2_prun_table(&mut self, sy: &SymmetriesTables, mv: &MoveTables) {
+    pub fn create_phase2_prun_table(&mut self, sy: &SymmetriesTables, mv: &MoveTables) -> Result<(), Error> {
         let total = N_CORNERS_CLASS * N_UD_EDGES;
         let fname = "tables/phase2_prun";
+        std::fs::create_dir_all("tables")?;
         let phase2_prun_table = std::fs::read(&fname).unwrap_or("".into());
         let corner_classidx = &sy.corner_classidx;
         let corner_sym = &sy.corner_sym;
@@ -377,18 +380,20 @@ impl PrunningTables {
                 println!("Depth: {} done: {}/{}", depth, done, total);
             }
             println!("remaining unfilled entries have depth >=11");
-            write_table(fname, &self.corners_ud_edges_depth3).unwrap();
+            write_table(fname, &self.corners_ud_edges_depth3)?;
         } else {
             // println!("Loading {} table...", fname);
-            self.corners_ud_edges_depth3 = decode_table(&phase2_prun_table).unwrap();
+            self.corners_ud_edges_depth3 = decode_table(&phase2_prun_table)?;
         }
+        Ok(())
     }
 
     /// Create/load the cornslice_depth pruning table for phase 2. 
     /// 
     /// With this table we do a fast precheck at the beginning of phase 2.
-    pub fn create_phase2_cornsliceprun_table(&mut self, mv: &MoveTables) {
+    pub fn create_phase2_cornsliceprun_table(&mut self, mv: &MoveTables) -> Result<(), Error> {
         let fname = "tables/phase2_cornsliceprun";
+        std::fs::create_dir_all("tables")?;
         let phase2_cornsliceprun_table = std::fs::read(&fname).unwrap_or("".into());
         let corners_move = &mv.corners_move;
         let slice_sorted_move = &mv.slice_sorted_move;
@@ -434,11 +439,12 @@ impl PrunningTables {
                 depth += 1;
             }
             println!();
-            write_table(fname, &self.cornslice_depth).unwrap();
+            write_table(fname, &self.cornslice_depth)?;
         } else {
             // println!("Loading {} table...", fname);
-            self.cornslice_depth = decode_table(&phase2_cornsliceprun_table).unwrap();
+            self.cornslice_depth = decode_table(&phase2_cornsliceprun_table)?;
         }
+        Ok(())
     }
 }
 
@@ -451,7 +457,7 @@ mod test {
         let sy = SymmetriesTables::new();
         let mv = MoveTables::new();
         let mut pruningtable = PrunningTables::default();
-        pruningtable.create_phase1_prun_table(&sy, &mv);
+        let _ = pruningtable.create_phase1_prun_table(&sy, &mv);
 
         let flipslice_twist_depth3 = pruningtable.flipslice_twist_depth3;
         assert_eq!(flipslice_twist_depth3.len(), 8806776);
@@ -469,7 +475,7 @@ mod test {
         let sy = SymmetriesTables::new();
         let mv = MoveTables::new();
         let mut pruningtable = PrunningTables::default();
-        pruningtable.create_phase2_prun_table(&sy, &mv);
+        let _ = pruningtable.create_phase2_prun_table(&sy, &mv);
 
         let corners_ud_edges_depth3 = pruningtable.corners_ud_edges_depth3;
         assert_eq!(corners_ud_edges_depth3.len(), 6975360);
@@ -486,7 +492,7 @@ mod test {
     fn test_cornslice_depth() {
         let mv = MoveTables::new();
         let mut pruningtable = PrunningTables::default();
-        pruningtable.create_phase2_cornsliceprun_table(&mv);
+        let _ = pruningtable.create_phase2_cornsliceprun_table(&mv);
 
         let cornslice_depth = pruningtable.cornslice_depth;
         assert_eq!(cornslice_depth.len(), 967680);
