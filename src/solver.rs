@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+use serde::{Serialize, Deserialize};
 
 use crate::constants::*;
 use crate::coord::{self, CoordCube, EdgeMergeTables};
@@ -49,7 +50,7 @@ impl SolverTables {
 /// Solution result:
 /// * solution: a Move vector.
 /// * solve_time: time to get solution(not include load data tables time.).
-#[derive (Debug)]
+#[derive (Debug, Serialize, Deserialize, Clone)]
 pub struct SoutionResult {
     pub solution: Vec<Move>,
     pub solve_time: Duration,

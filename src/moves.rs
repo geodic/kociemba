@@ -5,13 +5,14 @@ use crate::constants::*;
 use crate::cubie::{self, Corner::*, CubieCube, Edge::*};
 use crate::{decode_table, write_table};
 use crate::{error::Error, facelet::Color};
+use serde::{Serialize, Deserialize};
 
 /// Layer moves, Up, Right, Front, Down, Face, Back.
 /// 
 /// $ clockwise, $2 double, $3 counter-clockwise.
 #[rustfmt::skip]
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Move {
     U, U2, U3,
     R, R2, R3,

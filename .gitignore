@@ -19,3 +19,12 @@ phase1_prun
 phase2_cornsliceprun
 phase2_prun
 phase2_edgemerge
+web/dist/favicon.ico
+web/dist/index.html
+web/dist/styles-ff9e16be54b998cd.css
+web/dist/web-46b884c4a4735fe0_bg.wasm
+web/dist/web-46b884c4a4735fe0.js
+web/dist/.stage/favicon.ico
+web/dist/.stage/styles-ff9e16be54b998cd.css
+web/dist/.stage/web-4dd2cccf8ad376aa_bg.wasm
+web/dist/.stage/web-4dd2cccf8ad376aa.js

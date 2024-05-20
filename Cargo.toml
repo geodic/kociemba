@@ -14,9 +14,13 @@ readme = "./README.md"
 
 [dependencies]
 rand = "0.8.5"
+lazy_static = "1.4.0"
 bincode = { version = "2.0.0-rc", features = ["serde"] }
 thiserror = "1.0.60"
-crossterm = "0.27.0"
-clap = { version = "4.5.4", features = ["derive"] } 
-spinners = "4.1.1"
-lazy_static = "1.4.0"
+serde = { version = "1.0", features = ["derive"] }
+tower-http = "0.5.2"
+
+
+
+[workspace]
+members = [ "cli","server", "web"]

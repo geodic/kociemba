@@ -6,9 +6,9 @@ Herbert Kociemba的[The Two-Phase-Algorithm](https://kociemba.org/twophase.htm)�
 2. 使用lazy_static把相关数据表(SOLVERTABLES)初始化为全局静态变量，以供多线程使用。
 3. 多线程（参考Python版本的实现）。
 4. 支持超时机制，并且始终有结果返回（即使方案长度大于期望）。
-5. 一个简单的命令行工具kociemba.
+5. 一个简单的命令行工具kociemba-cli.
 ```
-PS C:\Projects\kociemba>kociemba.exe solve --facelet "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF" -m 20 -p
+PS C:\Projects\kociemba>kociemba-cli.exe solve --facelet "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF" -m 20 -p
 ⠇ Solving
 Solution:  R D2 B2 R2 L2 B' U F' D2 R B2 R2 F2 B2 R2 D2 B
 Move count: 17
@@ -16,7 +16,7 @@ Solve time: 3.163ms
 Total time: 3.0156508s
 ```
 ```
-PS C:\Projects\kociemba>kociemba.exe
+PS C:\Projects\kociemba>kociemba-cli.exe
 crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm
 
 Usage: kociemba.exe [COMMAND]
