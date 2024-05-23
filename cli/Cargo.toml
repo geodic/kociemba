@@ -1,7 +1,14 @@
 [package]
 name = "kociemba-cli"
-version = "0.1.0"
+version = "0.5.2"
 edition = "2021"
+description = "solving the 3x3 Rubik's cube with Kociemba's two phase algorithm"
+authors = [
+  "Adun Gaos <adungaos@gmail.com>",
+]
+repository = "https://github.com/adungaos/kociema"
+license = "MIT"
+readme = "../README.md"
 
 [dependencies]
 kociemba = {path = "../"}

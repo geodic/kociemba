@@ -1,16 +1,18 @@
+use std::{
+    io::{self, stdout},
+    time::Instant,
+};
 use clap::{arg, command, Parser, Subcommand};
 use crossterm::{
     cursor::{MoveLeft, MoveRight, MoveUp},
     execute,
     style::{Attribute, Color as TermColor, SetBackgroundColor, Stylize},
 };
+use spinners::Spinner;
+
 use kociemba::{cubie::CubieCube, facelet::FaceCube, scramble::{scramble_to_str, gen_scramble}, solver::solve as solver};
 use kociemba::{error::Error, facelet::Color, scramble::scramble_from_str};
-use spinners::Spinner;
-use std::{
-    io::{self, stdout},
-    time::Instant,
-};
+
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

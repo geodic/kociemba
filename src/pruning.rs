@@ -187,13 +187,6 @@ impl PrunningTables {
                                 if !backsearch {
                                     if self.get_flipslice_twist_depth3(idx1) == 3 {
                                         // entry not yet filled
-                                        if idx1 == 136 {
-                                            println!(
-                                                "idx1 136, value: {}, depth, {}",
-                                                (depth + 1) % 3,
-                                                depth
-                                            );
-                                        }
                                         self.set_flipslice_twist_depth3(idx1, (depth + 1) % 3);
                                         done += 1;
                                         // symmetric position has eventually more than one representation

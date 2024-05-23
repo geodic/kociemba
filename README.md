@@ -7,8 +7,9 @@ Herbert Kociemba的[The Two-Phase-Algorithm](https://kociemba.org/twophase.htm)�
 3. 多线程（参考Python版本的实现）。
 4. 支持超时机制，并且始终有结果返回（即使方案长度大于期望）。
 5. 一个简单的命令行工具kociemba-cli.
+
 ```
-PS C:\Projects\kociemba>kociemba-cli.exe solve --facelet "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF" -m 20 -p
+PS C:\Projects\kociemba>cargo run -p kociemba-cli solve --facelet "RLLBUFUUUBDURRBBUBRLRRFDFDDLLLUDFLRRDDFRLFDBUBFFLBBDUF" -m 20 -p
 ⠇ Solving
 Solution:  R D2 B2 R2 L2 B' U F' D2 R B2 R2 F2 B2 R2 D2 B
 Move count: 17
@@ -16,10 +17,10 @@ Solve time: 3.163ms
 Total time: 3.0156508s
 ```
 ```
-PS C:\Projects\kociemba>kociemba-cli.exe
-crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm
+PS C:\Projects\kociemba>cargo run -p kociemba-cli
+solving the 3x3 Rubik's cube with Kociemba's two phase algorithm
 
-Usage: kociemba.exe [COMMAND]
+Usage: kociemba-cli.exe [COMMAND]
 
 Commands:
   solve     solves the cube using two-phase algorithm
@@ -29,6 +30,32 @@ Commands:
 Options:
   -h, --help     Print help
   -V, --version  Print version
+```
+6. Web GUI(基于yew.rs)和http server.
+```
+PS C:\Projects\kociemba> cargo run -p kociemba-server
+   Compiling kociemba v0.5.2 (C:\Projects\kociemba)
+   Compiling kociemba-server v0.5.2 (C:\Projects\kociemba\server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 8.13s
+     Running `target\debug\kociemba-server.exe`
+listening on http://127.0.0.1:32125
+```
+```
+Solve a cube: http://localhost:32125/solve/
+
+Example: http://localhost:32125/solve/DUUBULDBFRBFRRULLLBRDFFFBLURDBFDFDRFRULBLUFDURRBLBDUDL
+Get a scramble: http://localhost:32125/scramble
+```
+```
+PS C:\Projects\kociemba\web> trunk serve --open -A ipv4
+2024-05-23T13:10:30.611015Z  INFO 🚀 Starting trunk 0.20.1
+2024-05-23T13:10:30.615589Z  INFO 📦 starting build
+... ... ...
+2024-05-23T13:10:31.230370Z  INFO applying new distribution
+2024-05-23T13:10:31.234240Z  INFO ✅ success
+2024-05-23T13:10:31.234359Z  INFO 📡 serving static assets at -> /
+2024-05-23T13:10:31.235899Z  INFO 📡 server listening at:
+2024-05-23T13:10:31.235972Z  INFO     🏠 http://127.0.0.1:8080/
 ```
 
 ### Crates.io
@@ -71,7 +98,8 @@ The Rust implementation of Herbert Kociemba's [Two-Phase-Algorithm](https://koci
 2. Use lazy_static to initialize the relevant data tables (SOLVERTABLES) as a global static variable for multithreading.
 3. Multithreadings (reference to implementation of Python version).
 4. Support the timeout mechanism and always return results (even if the move length is longer than expected).
-5. A simple command-line tool, kociemba, see above.
+5. A simple command-line tool, kociemba-cli, see above.
+6. A web GUI(powered by yew.rs) and a http server, see above.
 
 ### References
 * Herbert Kociemba的[The Two-Phase-Algorithm](https://kociemba.org/twophase.htm)

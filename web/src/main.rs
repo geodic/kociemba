@@ -1,20 +1,19 @@
-use crate::cubie::Face;
-use cubie::{Color, Cubie};
-use ehttp;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 use gloo::console::log;
 use gloo::timers::callback::Interval;
+use web_sys::HtmlTextAreaElement as InputElement;
+use yew::events::KeyboardEvent;
+use yew::{html, Component, Context, Html, TargetCast};
+use ehttp;
+
 use kociemba::cubie::CubieCube;
-use kociemba::facelet::{self, FaceCube};
+use kociemba::facelet::FaceCube;
 use kociemba::moves::Move;
 use kociemba::scramble::scramble_from_str;
 use kociemba::solver::SoutionResult;
-use std::collections::VecDeque;
-use std::fmt::format;
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
-use web_sys::HtmlTextAreaElement as InputElement;
-use yew::events::{FocusEvent, KeyboardEvent};
-use yew::{html, Component, Context, Html, TargetCast};
+
+use cubie::{Color, Cubie, Face};
 
 mod cubie;
 
@@ -24,17 +23,15 @@ pub enum Msg {
     Solve,
     Step,
     Stop,
-    SetColor(Color),
     Tick,
     SetFacelet(String),
 }
 
 pub struct App {
     active: bool,
-    cubies: Vec<Cubie>,
     facelet: String,
     _interval: Interval,
-    solution: Arc<Mutex<SoutionResult>>,
+    solution_result: Arc<Mutex<SoutionResult>>,
     command_queue: VecDeque<Move>,
     movings: Vec<u8>,
     movingface: Option<Move>,
@@ -46,7 +43,7 @@ impl App {
         let port = 32125;
         let facelet = self.facelet.clone();
         let url = format!("http://{}:{}/solve/{}", host, port, facelet);
-        let c_solution = Arc::clone(&self.solution);
+        let solution_result = Arc::clone(&self.solution_result);
         let request = ehttp::Request {
             headers: ehttp::Headers::new(&[
                 ("Accept", "*/*"),
@@ -58,18 +55,18 @@ impl App {
         ehttp::fetch(request, move |result: ehttp::Result<ehttp::Response>| {
             let response = result.unwrap().bytes;
             let _solution: SoutionResult = serde_json::from_slice(&response).unwrap();
-            let mut slock = c_solution.lock().unwrap();
+            let mut slock = solution_result.lock().unwrap();
             *slock = _solution.clone();
             log!(format!("Solution in closure: {:?}", *slock));
         });
     }
 
     fn step(&mut self) {
-        let solution = Arc::clone(&self.solution);
-        let mut solution = solution.lock().unwrap();
-        if (*solution).solution.len() > 0 {
-            self.command_queue = VecDeque::from((*solution).solution.clone());
-            (*solution).solution = Vec::new();
+        let solution_result = Arc::clone(&self.solution_result);
+        let mut slock = solution_result.lock().unwrap();
+        if (*slock).solution.len() > 0 {
+            self.command_queue = VecDeque::from((*slock).solution.clone());
+            (*slock).solution = Vec::new();
         }
         let fc = FaceCube::try_from(self.facelet.as_str()).unwrap();
         let cc = CubieCube::try_from(&fc).unwrap();
@@ -138,10 +135,9 @@ impl Component for App {
 
         Self {
             active: false,
-            cubies: vec![Cubie::new(); 54],
             facelet: "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB".to_string(),
             _interval: interval,
-            solution: Arc::new(Mutex::new(SoutionResult::default())),
+            solution_result: Arc::new(Mutex::new(SoutionResult::default())),
             command_queue: VecDeque::new(),
             movings: Vec::new(),
             movingface: None,
@@ -173,7 +169,7 @@ impl Component for App {
             Msg::Clean => {
                 self.active = false;
                 self.facelet = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB".to_string();
-                self.solution = Arc::new(Mutex::new(SoutionResult::default()));
+                self.solution_result = Arc::new(Mutex::new(SoutionResult::default()));
                 self.command_queue = VecDeque::new();
                 self.movings = Vec::new();
                 self.movingface = None;
@@ -183,11 +179,6 @@ impl Component for App {
                 self.active = false;
                 log::info!("Stop");
                 false
-            }
-            Msg::SetColor(color) => {
-                let mut cellule = self.cubies[0];
-                cellule.set_color(color);
-                true
             }
             Msg::Tick => {
                 if self.active {
@@ -234,7 +225,11 @@ impl Component for App {
                 <div></div>
                 <div class="face" id="up">{for cubies_up}</div>
                 <div class="info">
-                    <h2>{format!("Moving Queue: {:?}", self.command_queue)}</h2>
+                    <h2>{format!("Moving Queue: {}",
+                    self.command_queue.iter()
+                    .map(|m| Move::to_string(m))
+                    .fold("".to_string(), |acc, x| format!("{} {}", acc, x))
+                    .trim().to_string())}</h2>
                     <h2>{format!("Current Moving: {}", current_moving)}</h2>
                     <h2>{format!("Next Moving: {}", next_moving)}</h2>
                 </div>
@@ -311,14 +306,14 @@ impl Component for App {
             if e.key() == "Enter" {
                 let input: InputElement = e.target_unchecked_into();
                 let value = input.value();
-                
+
                 match scramble_from_str(&value) {
                     Ok(moves) => {
                         let cc = CubieCube::default();
                         let cc = cc.apply_moves(&moves);
                         let fc = FaceCube::try_from(&cc).unwrap();
                         Msg::SetFacelet(fc.to_string())
-                    },
+                    }
                     Err(_e) => Msg::Clean,
                 }
             } else {
@@ -371,7 +366,7 @@ impl Component for App {
     }
 }
 
-pub fn f2c(f: char) -> Color {
+fn f2c(f: char) -> Color {
     match f {
         'U' => Color::Yellow,
         'L' => Color::Blue,

@@ -6,10 +6,10 @@ use axum::{
     routing::get,
     Router,
 };
+use tower_http::cors::CorsLayer;
 
 use kociemba::scramble;
 use kociemba::solver::{self, SoutionResult};
-use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {

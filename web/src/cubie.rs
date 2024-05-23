@@ -12,7 +12,6 @@ pub enum Color {
     Orange,
     Blue,
     Green,
-    Gray,
 }
 
 impl Display for Color {
@@ -44,21 +43,6 @@ pub struct Cubie {
     pub color: Color,
 }
 
-impl Cubie {
-
-    pub fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    pub fn new() ->Self {
-        Self { id: 0,
-            face: Face::Up,
-            color: Color::Gray,
-             }
-    }
-    
-}
-
 #[derive(Properties, Debug, PartialEq)]
 pub struct CubieProps {
     pub id: u8,
@@ -83,7 +67,6 @@ impl Component for Cubie{
             Color::Orange => "orange",
             Color::Blue => "blue",
             Color::Green => "green",
-            Color::Gray => "gray",
         };
         let (center_str, center) = match ctx.props().id {
             4 => ("U", "center"),

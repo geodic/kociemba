@@ -34,9 +34,9 @@ impl SolverTables {
         let sy = symmetries::SymmetriesTables::new();
         let mv = moves::MoveTables::new();
         let mut pr = pruning::PrunningTables::default();
-        pr.create_phase1_prun_table(&sy, &mv);
-        pr.create_phase2_prun_table(&sy, &mv);
-        pr.create_phase2_cornsliceprun_table(&mv);
+        let _ = pr.create_phase1_prun_table(&sy, &mv);
+        let _ = pr.create_phase2_prun_table(&sy, &mv);
+        let _ = pr.create_phase2_cornsliceprun_table(&mv);
         let em = coord::EdgeMergeTables::new();
         Self {
             sy: sy,
