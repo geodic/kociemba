@@ -1,6 +1,6 @@
 [package]
 name = "kociemba-web"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 description = "Web GUI for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm"
 authors = [

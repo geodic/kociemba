@@ -1,7 +1,3 @@
-use std::{
-    io::{self, stdout},
-    time::Instant,
-};
 use clap::{arg, command, Parser, Subcommand};
 use crossterm::{
     cursor::{MoveLeft, MoveRight, MoveUp},
@@ -9,10 +5,18 @@ use crossterm::{
     style::{Attribute, Color as TermColor, SetBackgroundColor, Stylize},
 };
 use spinners::Spinner;
+use std::{
+    io::{self, stdout},
+    time::Instant,
+};
 
-use kociemba::{cubie::CubieCube, facelet::FaceCube, scramble::{scramble_to_str, gen_scramble}, solver::solve as solver};
+use kociemba::{
+    cubie::CubieCube,
+    facelet::FaceCube,
+    scramble::{gen_scramble, scramble_to_str},
+    solver::solve as solver,
+};
 use kociemba::{error::Error, facelet::Color, scramble::scramble_from_str};
-
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -85,7 +89,7 @@ fn solve(
     Ok(())
 }
 
-fn solve_state(cubestring: &str, max: usize, timeout: f32, verbose: bool) -> Result<(), Error> {
+fn solve_state(cubestring: &str, max: usize, timeout: f32, _verbose: bool) -> Result<(), Error> {
     let start = Instant::now();
     let mut spinner = Spinner::new(spinners::Spinners::Dots, "Solving".to_owned());
     let result = solver(&cubestring, max, timeout)?;
@@ -96,7 +100,7 @@ fn solve_state(cubestring: &str, max: usize, timeout: f32, verbose: bool) -> Res
     println!("Solution: {}", scramble_to_str(&result.solution)?);
     println!("Move count: {}", result.solution.len());
     println!("Solve time: {:?}", result.solve_time);
-    println!("Total time: {:?}", end-start);
+    println!("Total time: {:?}", end - start);
 
     Ok(())
 }
@@ -190,10 +194,7 @@ fn main() {
             verbose,
             preview,
         }) => solve(scramble, facelet, *max, *timeout, *verbose, *preview),
-        Some(Commands::Scramble {
-            length,
-            preview,
-        }) => scramble(*length, *preview),
+        Some(Commands::Scramble { length, preview }) => scramble(*length, *preview),
         _ => Ok(()),
     };
 

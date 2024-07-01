@@ -374,6 +374,11 @@ impl CubieCube {
         self.edge_multiply(b);
     }
 
+    /// Multiplay this cubie cube with a move vector.
+    pub fn multiply_moves(&mut self, moves: &Vec<Move>) {
+        moves.iter().for_each(|&m| self.multiply(BSCT.bsc[m as usize]));
+    }
+
     /// Return the inverse of this cubiecube.
     pub fn inverse_cubie_cube(&self) -> Self {
         let mut d = CubieCube::default();
@@ -935,6 +940,19 @@ pub fn move_cubes() -> [CubieCube; 18] {
     move_cube
 }
 
+pub struct BasicMoveCubeTables {
+    bsc: [CubieCube; 18],
+}
+impl BasicMoveCubeTables {
+    pub fn new() -> Self {
+        Self { bsc: move_cubes() }
+    }
+}
+
+lazy_static! {
+    static ref BSCT: BasicMoveCubeTables = BasicMoveCubeTables::new();
+}
+
 /// Rotate array arr right between left and right. right is includ
 pub fn rotate_right<T: Copy>(arr: &mut [T], left: usize, right: usize) {
     let temp = arr[right];
@@ -977,6 +995,7 @@ pub fn c_nk(n: u32, k: u32) -> u32 {
 #[cfg(test)]
 mod test {
     use crate::cubie::*;
+    use crate::cubie::BSCT;
 
     #[test]
     fn test_eq() {
@@ -986,11 +1005,13 @@ mod test {
     }
 
     #[test]
-    fn test_multiply() {
-        let mut state = CubieCube::default().apply_move(F);
-        let s2 = CubieCube::default().apply_move(R);
-        state.multiply(s2);
-
+    fn test_apply() {
+        let state = CubieCube::default().apply_move(R);
+        assert_eq!(state, R_MOVE);
+        let r2_state = CubieCube::default().apply_move(R).apply_move(R);
+        assert_eq!(r2_state, R_MOVE * R_MOVE);
+        let r3_state = r2_state.apply_move(R);
+        assert_eq!(r3_state, r2_state * R_MOVE);
         let fr_state = CubieCube {
             //URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB,
             cp: [URF, DLF, ULB, UFL, DRB, DFR, DBL, UBR],
@@ -998,6 +1019,25 @@ mod test {
             ep: [UF, FL, UL, UB, BR, FR, DL, DB, DR, DF, BL, UR],
             eo: [1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
         };
+        assert_eq!(F_MOVE * R_MOVE, fr_state);
+    }
+
+    #[test]
+    fn test_multiply() {
+        let mut state = CubieCube::default().apply_move(F);
+        let s2 = CubieCube::default().apply_move(R);
+        state.multiply(s2);
+        let fr_state = CubieCube {
+            //URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB,
+            cp: [URF, DLF, ULB, UFL, DRB, DFR, DBL, UBR],
+            co: [1, 2, 0, 2, 1, 1, 0, 2],
+            ep: [UF, FL, UL, UB, BR, FR, DL, DB, DR, DF, BL, UR],
+            eo: [1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
+        };
+        assert_eq!(state, fr_state);
+        let mut state = CubieCube::default();
+        state.multiply(BSCT.bsc[F as usize]);
+        state.multiply(BSCT.bsc[R as usize]);
         assert_eq!(state, fr_state);
     }
 
@@ -1204,35 +1244,15 @@ mod test {
     }
 
     #[test]
-    fn test_mult() {
-        let state = CubieCube::default().apply_move(R);
-        assert_eq!(state, R_MOVE);
-
-        let r2_state = CubieCube::default().apply_move(R).apply_move(R);
-        assert_eq!(r2_state, R_MOVE * R_MOVE);
-
-        let r3_state = r2_state.apply_move(R);
-        assert_eq!(r3_state, r2_state * R_MOVE);
-
-        let fr_state = CubieCube {
-            //URF, UFL, ULB, UBR, DFR, DLF, DBL, DRB,
-            cp: [URF, DLF, ULB, UFL, DRB, DFR, DBL, UBR],
-            co: [1, 2, 0, 2, 1, 1, 0, 2],
-            ep: [UF, FL, UL, UB, BR, FR, DL, DB, DR, DF, BL, UR],
-            eo: [1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
-        };
-
-        assert_eq!(F_MOVE * R_MOVE, fr_state);
-    }
-
-    #[test]
     fn test_move_sequence() {
         // (R U R' U') * 6
         let moves = vec![
             R, U, R3, U3, R, U, R3, U3, R, U, R3, U3, R, U, R3, U3, R, U, R3, U3, R, U, R3, U3,
         ];
         let state = CubieCube::default().apply_moves(&moves);
-
+        assert_eq!(state, SOLVED_CUBIE_CUBE);
+        let mut state = CubieCube::default();
+        state.multiply_moves(&moves);
         assert_eq!(state, SOLVED_CUBIE_CUBE);
     }
 
@@ -1243,14 +1263,16 @@ mod test {
             U, F3, D3, F2, D, B2, D3, R2, U3, F2, R2, D2, R2, U3, L, B, L, R, F3, D, B3,
         ];
         let state = CubieCube::default().apply_moves(&scramble);
-
         let expected = CubieCube {
             cp: [DFR, UBR, DLF, ULB, DRB, UFL, URF, DBL],
             co: [2, 0, 1, 2, 0, 0, 2, 2],
             ep: [DF, UB, FL, BL, BR, UL, DR, FR, DL, DB, UF, UR],
             eo: [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1],
         };
+        assert_eq!(state, expected);
 
+        let mut state = CubieCube::default();
+        state.multiply_moves(&scramble);
         assert_eq!(state, expected);
     }
 

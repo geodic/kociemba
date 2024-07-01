@@ -68,9 +68,9 @@ PS C:\Projects\kociemba\web> trunk serve --open -A ipv4
 
 ~~2. 多次加载数据表问题。~~
 
-3. solutions第一个空元素问题。
+~~3. solutions第一个空元素问题。~~
 
-4. lazy static是否可优化。
+4. lazy_static是否可优化。
 
 ~~5. 命令行程序移植。~~
 
@@ -79,6 +79,10 @@ PS C:\Projects\kociemba\web> trunk serve --open -A ipv4
 ~~7. 发布到crates.io。~~
 
 8. 错误处理。
+
+9. CubieCube数据结构优化，eo/co合并进入ep/cp，节省空间。
+
+10. 性能优化（multiply_moves 替代 apply_moves等）。
 
 
 ### 参考资料

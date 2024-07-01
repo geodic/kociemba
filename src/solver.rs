@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-use serde::{Serialize, Deserialize};
 
 use crate::constants::*;
 use crate::coord::{self, CoordCube, EdgeMergeTables};
@@ -17,7 +17,7 @@ use crate::symmetries::SymmetriesTables;
 use crate::{pruning, symmetries};
 
 /// All data tables.
-/// 
+///
 /// * `sy`: [SymmetriesTables]
 /// * `mv`: [MoveTables]
 /// * `pr`: [PrunningTables]
@@ -50,7 +50,7 @@ impl SolverTables {
 /// Solution result:
 /// * solution: a Move vector.
 /// * solve_time: time to get solution(not include load data tables time.).
-#[derive (Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SoutionResult {
     pub solution: Vec<Move>,
     pub solve_time: Duration,
@@ -66,7 +66,7 @@ impl Default for SoutionResult {
 }
 
 /// Solve a cube defined by cubstring to a position defined by goalstring.
-/// 
+///
 /// # Parameters
 /// * `cubestring`: The format of the string is given in the Facelet class defined.
 /// * `goalstring`: The format of the string is given in the Facelet class defined.
@@ -129,7 +129,7 @@ pub fn solver(
             cc = ccg.inverse_cubie_cube();
             cc.multiply(cc0);
         }
-    
+
         let start_time = Instant::now();
         let syms = cc.symmetries();
         let v: HashSet<usize> = HashSet::from([16, 20, 24, 28]);
@@ -149,7 +149,7 @@ pub fn solver(
         let mut solverthreads = vec![];
 
         // these mutable variables are modidified by all six threads
-        let solutions = Arc::new(Mutex::new(vec![Vec::<Move>::new()]));
+        let solutions: Arc<Mutex<Vec<Vec<Move>>>> = Arc::new(Mutex::new(Vec::new()));
         let terminated = Arc::new(Mutex::new(false));
 
         for i in tr {
@@ -180,7 +180,7 @@ pub fn solver(
 
         if i == 1 {
             let solutions = solutions.lock().unwrap();
-            if (*solutions).len() > 1 {
+            if (*solutions).len() > 0 {
                 let end_time = Instant::now();
                 let ls = (*solutions).last().unwrap();
                 // println!("{:?} ({}), {:?}", *ls, (*ls).len(), end_time - start_time)
@@ -217,7 +217,6 @@ pub fn solve(cubestring: &str, max_length: usize, timeout: f32) -> Result<Soutio
     let goalstring = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB";
     solver(cubestring, goalstring, max_length, timeout)
 }
-
 
 /** The SolverThread class solves implements the two phase algorithm.
 
@@ -270,21 +269,21 @@ impl<'a> SolverThread<'a> {
     ) -> Self {
         let co_cube = CoordCube::default();
         Self {
-            cb_cube: cb_cube,
-            co_cube: co_cube,
-            rot: rot,
-            inv: inv,
+            cb_cube,
+            co_cube,
+            rot,
+            inv,
             sofar_phase1: Vec::new(),
             sofar_phase2: Vec::new(),
             phase2_done: false,
-            ret_length: ret_length,
-            timeout: timeout,
-            start_time: start_time,
+            ret_length,
+            timeout,
+            start_time,
             cornersave: 0,
-            solutions: solutions,
-            terminated: terminated,
-            shortest_length: shortest_length,
-            solvertables: solvertables,
+            solutions,
+            terminated,
+            shortest_length,
+            solvertables,
         }
     }
 
@@ -340,7 +339,7 @@ impl<'a> SolverThread<'a> {
     ways due to overall even parity). This is a lower bound for the number of moves to solve phase 2.
 
     # Parameters
-    
+
     `corners`: Corners coordinate
 
     `ud_edges`: Coordinate of the 8 edges of U and D face.
@@ -426,8 +425,13 @@ impl<'a> SolverThread<'a> {
             let mut other = self.sofar_phase2.clone();
             man.append(&mut other);
             let mut solutions = self.solutions.lock().unwrap();
-            let lslen = (*solutions).last().unwrap().len();
-            if (*solutions).len() == 1 || lslen > man.len() {
+            // let lslen = (*solutions).last().unwrap().len();
+            let ls = (*solutions).last();
+            let lslen = match ls.is_some() {
+                true => ls.unwrap().len(),
+                false => 0,
+            };
+            if (*solutions).len() == 0 || lslen > man.len() {
                 if self.inv == 1 {
                     // we solved the inverse cube
                     man.reverse();
@@ -548,7 +552,7 @@ impl<'a> SolverThread<'a> {
             {
                 let solutions = self.solutions.lock().unwrap();
                 if self.start_time.elapsed() > Duration::from_secs_f32(self.timeout)
-                    && (*solutions).len() > 1
+                    && (*solutions).len() > 0
                 {
                     let mut terminated = self.terminated.lock().unwrap();
                     *terminated = true;
@@ -718,14 +722,13 @@ impl<'a> SolverThread<'a> {
         for togo1 in dist..20 {
             // iterative deepening, solution has at least dist moves
             self.sofar_phase1 = Vec::new();
-            let _ret = self
-                .search(
-                    self.co_cube.flip,
-                    self.co_cube.twist,
-                    self.co_cube.slice_sorted,
-                    dist,
-                    togo1,
-                );
+            let _ret = self.search(
+                self.co_cube.flip,
+                self.co_cube.twist,
+                self.co_cube.slice_sorted,
+                dist,
+                togo1,
+            );
         }
     }
 }
@@ -758,7 +761,13 @@ mod test {
             "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB",
             20,
             3.0,
-        ).unwrap();
-        println!("{:?}, ({}), ({:?})", result.solution, result.solution.len(), result.solve_time);
+        )
+        .unwrap();
+        println!(
+            "{:?}, ({}), ({:?})",
+            result.solution,
+            result.solution.len(),
+            result.solve_time
+        );
     }
 }

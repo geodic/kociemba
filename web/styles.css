@@ -14,7 +14,6 @@ body {
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
-  font-smoothing: antialiased;
   font-weight: 300;
   background-color: #000000;
 }
@@ -174,10 +173,15 @@ body {
 .info {
   border: 1px solid #fff;
   color: #fff;
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 500;
   line-height: 140%;
   text-align: left;
+  margin: 5px;
+  padding: 5px;
+}
+
+.info h2 {
   margin: 5px;
   padding: 5px;
 }
@@ -200,6 +204,7 @@ body {
 }
 
 textarea {
+  color: black;
   font-size: 32px;
   width: 480px;
   line-height: 1.35em;

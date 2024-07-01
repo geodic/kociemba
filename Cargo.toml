@@ -1,6 +1,6 @@
 [package]
 name = "kociemba"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 description = "crate for solving the 3x3 Rubik's cube with Kociemba's two phase algorithm"
 authors = [
@@ -12,6 +12,9 @@ categories = ["algorithms"]
 license = "MIT"
 readme = "./README.md"
 
+[profile.dev]
+opt-level = 1
+
 [dependencies]
 rand = "0.8.5"
 lazy_static = "1.4.0"
@@ -20,7 +23,12 @@ thiserror = "1.0.60"
 serde = { version = "1.0", features = ["derive"] }
 tower-http = "0.5.2"
 
+[dev-dependencies]
+criterion = "0.5.1"
 
+[[bench]]
+name = "bench_solver"
+harness = false
 
 [workspace]
 members = [ "cli","server", "web"]
