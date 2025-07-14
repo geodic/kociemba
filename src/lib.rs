@@ -55,7 +55,7 @@ where
     Ok(())
 }
 
-fn decode_table<T: Decode>(bytes: &[u8]) -> Result<T, Error> {
+fn decode_table<T: Decode<()>>(bytes: &[u8]) -> Result<T, Error> {
     let (decoded, written) = decode_from_slice(bytes, CONFIG)?;
     let additional = bytes.len() - written;
 
